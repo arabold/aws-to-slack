@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  HookUrl:
+    Description: Slack webhook URL; see https://stashimi.slack.com/apps/
+    Type: String
+  Channel:
+    Description: Channel name to post to (optional)
+    Type: String
+
+Conditions:
+  HasChannel: !Not [!Equals [!Ref Channel, '']]
+
+Resources:
+  Handler:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/index.handler
+      Runtime: nodejs6.10
+      CodeUri: s3://aws-to-slack/release.zip
+      MemorySize: 256
+      Timeout: 10
+      Policies: CloudWatchReadOnlyAccess
+      Environment:
+        Variables:
+          SLACK_HOOK_URL: !Ref HookUrl
+          SLACK_CHANNEL: !If [HasChannel, !Ref Channel, !Ref 'AWS::NoValue']
