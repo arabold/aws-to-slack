@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 
 Parameters:
   HookUrl:
-    Description: Slack webhook URL; see https://stashimi.slack.com/apps/
+    Description: Slack webhook URL; see https://example.slack.com/apps/
     Type: String
   Channel:
     Description: Channel name to post to (optional)
