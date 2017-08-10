@@ -7,8 +7,9 @@ const BbPromise = require("bluebird"),
 class GenericParser {
 
 	parse(event) {
-		return BbPromise.try(() => {
-			const message = JSON.parse(_.get(event, "Records[0].Sns.Message", "{}"));
+		return BbPromise.try(() => JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
+		.catch(_.noop) // ignore JSON errors
+		.then(message => {
 			if (_.get(message, "Event Source") !== "db-instance") {
 				// Not of interest for us
 				return BbPromise.resolve(false);

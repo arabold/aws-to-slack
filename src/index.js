@@ -8,7 +8,8 @@ function processIncoming(event) {
 	const GenericParser = require("./parsers/generic");
 	const parsers = [
 		require("./parsers/cloudwatch"),
-		require("./parsers/rds")
+		require("./parsers/rds"),
+		require("./parsers/beanstalk")
 	];
 
 	// Execute all parsers and use the first successful result
@@ -21,7 +22,9 @@ function processIncoming(event) {
 		return parser.parse(event)
 		.then(result => result ? result : BbPromise.reject()); // reject on empty result
 	}))
-	.catch(() => {
+	.catch(err => {
+		console.log("Error while parsing message:", err);
+
 		// Fallback to the generic parser if none other succeeded
 		const parser = new GenericParser();
 		return parser.parse(event);

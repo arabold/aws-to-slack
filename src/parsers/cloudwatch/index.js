@@ -8,8 +8,9 @@ const BbPromise = require("bluebird"),
 class CloudWatchParser {
 
 	parse(event) {
-		return BbPromise.try(() => {
-			const message = JSON.parse(_.get(event, "Records[0].Sns.Message", "{}"));
+		return BbPromise.try(() => JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
+		.catch(_.noop) // ignore JSON errors
+		.then(message => {
 			if (!_.has(message, "AlarmName") || !_.has(message, "AlarmDescription")) {
 				// Not of interest for us
 				return BbPromise.resolve(false);
