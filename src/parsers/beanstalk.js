@@ -26,7 +26,7 @@ class BeanstalkParser {
 			}, {});
 
 			if (!_.has(message, "Message") || !_.has(message, "Application") ||
-				!_.has(message, "Environment") || !_.has(message, "Timestamp")) {
+					!_.has(message, "Environment") || !_.has(message, "Timestamp")) {
 				// Doesn't seem like we can parse this - so not of interest for us
 				return BbPromise.resolve(false);
 			}
@@ -38,22 +38,33 @@ class BeanstalkParser {
 			const environmentUrl = _.get(message, "Environment URL");
 			const time = _.get(message, "Timestamp");
 
-			let color = Slack.COLORS.accent;
-			let newState = null;
-			let oldState = null;
-			const match = text.match(/from (\w+) to (\w+)\.$/i);
-			if (match && match.length > 2) {
-				oldState = match[1];
-				newState = match[2];
-				if (newState === "Ok") {
-					color = Slack.COLORS.ok;
-				}
-				else if (newState === "Warning") {
-					color = Slack.COLORS.warning;
-				}
-				else if (newState === "Degraded") {
-					color = Slack.COLORS.critical;
-				}
+			const stateRed = (_.includes(text, " to RED"));
+			const stateSevere = (_.includes(text, " to Severe"));
+			const butWithErrors = (_.includes(text, " but with errors"));
+			const noPermission = (_.includes(text, "You do not have permission"));
+			const failedDeploy = (_.includes(text, "Failed to deploy application"));
+			const failedConfig = (_.includes(text, "Failed to deploy configuration"));
+			const failedQuota = (_.includes(text, "Your quota allows for 0 more running instance"));
+			const unsuccessfulCommand = (_.includes(text, "Unsuccessful command execution"));
+
+			const stateYellow = (_.includes(text, " to YELLOW"));
+			const stateWarning = (_.includes(text, " to Warning"));
+			const stateDegraded = (_.includes(text, " to Degraded"));
+			const stateInfo = (_.includes(text, " to Info"));
+			const removedInstance = (_.includes(text, "Removed instance "));
+			const addingInstance = (_.includes(text, "Adding instance "));
+			const abortedOperation = (_.includes(text, " aborted operation."));
+			const abortedDeployment = (_.includes(text, "some instances may have deployed the new application version"));
+
+			let color = Slack.COLORS.ok;
+			if (stateRed || stateSevere || butWithErrors || noPermission ||
+					failedDeploy || failedConfig || failedQuota || unsuccessfulCommand) {
+				color = Slack.COLORS.critical;
+			}
+			if (stateYellow || stateWarning || stateDegraded || stateInfo ||
+					removedInstance || addingInstance || abortedOperation ||
+					abortedDeployment) {
+				color = Slack.COLORS.warning;
 			}
 
 			const slackMessage = {
@@ -71,14 +82,6 @@ class BeanstalkParser {
 					}, {
 						title: "Environment",
 						value: environment,
-						short: true
-					}, {
-						title: "Old State",
-						value: oldState,
-						short: true
-					}, {
-						title: "New State",
-						value: newState,
 						short: true
 					}],
 					ts: Slack.toEpochTime(new Date(time))
