@@ -31,6 +31,7 @@ class Slack {
 	/**
 	 * Converts a given {@link Date} object to a Slack-compatible epoch timestamp.
 	 *
+	 * @param {Date} date - Date object to convert
 	 * @returns {Integer} Epoch time
 	 */
 	static toEpochTime(date) {
@@ -40,6 +41,7 @@ class Slack {
 	/**
 	 * Posts a message to Slack.
 	 *
+	 * @param {Object} message - Message to post to Slack
 	 * @returns {Promise} Fulfills on success, rejects on error.
 	 */
 	static postMessage(message) {

@@ -37,7 +37,7 @@
 				// Metric name
 				// http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html
 				"metricName": "CPUUtilization",
-				// Statistics values. 'Maximum', 'Sum' and "Average" supported
+				// Statistics values. 'Maximum', 'Minimum', 'Sum' and "Average" supported
 				"statisticValues": "Maximum",
 				// Unit. http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html
 				// 'Percent' and 'Count' currently supported
@@ -348,6 +348,7 @@ class AwsCloudWatchChart {
 
 			for (const ktl in timeSlots) {
 				let maxInPeriod = 0;
+				let minInPeriod = 0;
 				let totalInPeriod = 0;
 				let totalInPeriodCount = 0;
 				for (const ks in metrics.statistics) {
@@ -357,6 +358,11 @@ class AwsCloudWatchChart {
 						if (!_.isUndefined(statistics.Maximum)) {
 							if (maxInPeriod < statistics.Maximum) {
 								maxInPeriod = statistics.Maximum;
+							}
+						}
+						else if (!_.isUndefined(statistics.Minimum)) {
+							if (minInPeriod < statistics.Minimum) {
+								minInPeriod = statistics.Minimum;
 							}
 						}
 						else if (!_.isUndefined(statistics.Average)) {
@@ -378,6 +384,9 @@ class AwsCloudWatchChart {
 				let toPush;
 				if (_.toUpper(metrics.statisticValues) === "MAXIMUM") {
 					toPush = maxInPeriod;
+				}
+				else if (_.toUpper(metrics.statisticValues) === "MINIMUM") {
+					toPush = minInPeriod;
 				}
 				else if (_.toUpper(metrics.statisticValues) === "SUM") {
 					toPush = totalInPeriod;

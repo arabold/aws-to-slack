@@ -14,6 +14,7 @@ than the Google Charts API for rendering CloudWatch metrics.
 Supported notification formats:
 * CloudWatch Alarms (incl. Metrics)
 * Elastic Beanstalk
+* RDS
 * Generic SNS messages
 * Plain text messages
 
