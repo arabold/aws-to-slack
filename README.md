@@ -1,6 +1,6 @@
 # AWS-to-Slack
 
-[![npm](https://img.shields.io/npm/v/aws-to-slack.svg)](https://www.npmjs.com/package/serverless-sentry)
+[![npm](https://img.shields.io/npm/v/aws-to-slack.svg)](https://www.npmjs.com/package/aws-to-slack)
 [![license](https://img.shields.io/github/license/arabold/aws-to-slack.svg)](https://github.com/arabold/aws-to-slack/blob/master/LICENSE)
 [![dependencies](https://img.shields.io/david/arabold/aws-to-slack.svg)](https://www.npmjs.com/package/aws-to-slack)
 
