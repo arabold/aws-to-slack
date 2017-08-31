@@ -12,8 +12,9 @@ in your own AWS environment and doesn't have any 3rd party dependencies other
 than the Google Charts API for rendering CloudWatch metrics.
 
 Supported notification formats:
+* AWS Health Dashboard 🆕
 * CloudWatch Alarms (incl. Metrics)
-* Elastic Beanstalk
+* Elastic Beanstalk 🆕
 * RDS
 * Generic SNS messages
 * Plain text messages

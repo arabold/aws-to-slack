@@ -1,10 +1,11 @@
 {
   "name": "aws-to-slack",
-  "version": "1.0.0",
-  "description": "Forward AWS Messages to Slack",
+  "version": "1.1.0",
+  "description": "Forward AWS Notification Messages to Slack",
   "main": "handler/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node src/test",
+    "lint": "node node_modules/eslint/bin/eslint.js . --ext .jsx --ext .js || exit 0"
   },
   "author": "",
   "license": "ISC",
@@ -13,10 +14,10 @@
     "lodash": "^4.17.4"
   },
   "devDependencies": {
-    "aws-sdk": "^2.92.0",
-    "eslint": "^4.3.0",
+    "aws-sdk": "^2.106.0",
+    "eslint": "^4.5.0",
     "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-lodash": "^2.4.4",
+    "eslint-plugin-lodash": "^2.4.5",
     "eslint-plugin-promise": "^3.5.0"
   }
 }

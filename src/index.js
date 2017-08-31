@@ -9,7 +9,8 @@ function processIncoming(event) {
 	const parsers = [
 		require("./parsers/cloudwatch"),
 		require("./parsers/rds"),
-		require("./parsers/beanstalk")
+		require("./parsers/beanstalk"),
+		require("./parsers/aws-health")
 	];
 
 	// Execute all parsers and use the first successful result
@@ -22,8 +23,8 @@ function processIncoming(event) {
 		return parser.parse(event)
 		.then(result => result ? result : BbPromise.reject()); // reject on empty result
 	}))
-	.catch(err => {
-		console.log("Error while parsing message:", err);
+	.catch(() => {
+		console.log("No parser was able to parse the message.");
 
 		// Fallback to the generic parser if none other succeeded
 		const parser = new GenericParser();
@@ -36,7 +37,7 @@ function processIncoming(event) {
 			return BbPromise.resolve();
 		}
 
-		// console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
+		console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
 		return Slack.postMessage(message);
 	});
 }
