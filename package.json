@@ -1,14 +1,18 @@
 {
   "name": "aws-to-slack",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Forward AWS Notification Messages to Slack",
   "main": "handler/index.js",
   "scripts": {
     "test": "node src/test",
     "lint": "node node_modules/eslint/bin/eslint.js . --ext .jsx --ext .js || exit 0"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Andre Rabold",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arabold/aws-to-slack.git"
+  },
   "dependencies": {
     "bluebird": "^3.5.0",
     "lodash": "^4.17.4"
