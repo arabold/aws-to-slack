@@ -27,5 +27,5 @@ package:
 
 .PHONY: publish
 publish:
-	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack/"
-	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack/"
+	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack/" --acl public-read
+	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack/" --acl public-read
