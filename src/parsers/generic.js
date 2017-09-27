@@ -8,9 +8,10 @@ class GenericParser {
 
 	parse(event) {
 		return BbPromise.try(() => {
-			let text, time;
+			let text, time, title;
 			if (_.has(event, "Records[0].Sns.Message")) {
 				// Output the SNS message body
+				title = _.get(event, "Records[0].Sns.Subject");
 				text = _.get(event, "Records[0].Sns.Message");
 				time = new Date(_.get(event, "Records[0].Sns.Timestamp"));
 			}
@@ -27,9 +28,9 @@ class GenericParser {
 				attachments: [{
 					fallback: text,
 					color: Slack.COLORS.neutral,
-					// author_name: "AWS Notification",
-					text: text,
-					ts: Slack.toEpochTime(time ? time : new Date())
+					ts: Slack.toEpochTime(time ? time : new Date()),
+					title,
+					text
 				}]
 			};
 			return BbPromise.resolve(slackMessage);

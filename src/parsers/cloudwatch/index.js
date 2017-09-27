@@ -17,9 +17,10 @@ class CloudWatchParser {
 			}
 
 			// CloudWatch Alarm
+			const accountId = message.AWSAccountId;
 			const alarmName = message.AlarmName;
 			// const description = message.AlarmDescription;
-			// const oldState = message.OldStateValue;
+			const oldState = message.OldStateValue;
 			const newState = message.NewStateValue;
 			const reason = message.NewStateReason;
 			const region = message.Region;
@@ -46,12 +47,20 @@ class CloudWatchParser {
 					title: alarmName,
 					text: reason,
 					fields: [{
-						title: "New State",
-						value: newState,
+						title: "Acount ID",
+						value: accountId,
 						short: true
 					}, {
 						title: "Region",
 						value: region,
+						short: true
+					}, {
+						title: "Old State",
+						value: oldState,
+						short: true
+					}, {
+						title: "New State",
+						value: newState,
 						short: true
 					}],
 					ts: Slack.toEpochTime(new Date(time))
