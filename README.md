@@ -22,6 +22,7 @@ Supported notification formats:
 * CloudWatch Alarms (incl. Metrics)
 * Elastic Beanstalk
 * RDS
+* AWS Inspector
 * Generic SNS messages
 * Plain text messages
 
