@@ -174,12 +174,13 @@ class InspectorParser {
 
 			const slackMessage = {
 				attachments: [{
+					author_name: "Amazon Inspector",
 					fallback: text,
 					color: color,
 					title: title,
 					text: text,
 					fields: fields,
-					mrkdwn_in: ["text"],
+					mrkdwn_in: [ "text" ],
 					ts: Slack.toEpochTime(time)
 				}]
 			};

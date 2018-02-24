@@ -19,10 +19,11 @@ than the Google Charts API for rendering CloudWatch metrics.
 
 Supported notification formats:
 * AWS Health Dashboard 🆕
+* AWS Code Build 🆕
+* Amazon Inspector 🆕
 * CloudWatch Alarms (incl. Metrics)
 * Elastic Beanstalk
 * RDS
-* AWS Inspector
 * Generic SNS messages
 * Plain text messages
 
@@ -74,6 +75,17 @@ to actual CloudWatch alarms and other SNS triggers. Open up the AWS Lambda,
 switch to the "Triggers" tab and subscribe for all events you're interested in.
 
 ![Lambda Triggers](./docs/config-lambda-triggers.png)
+
+
+### Setting Up AWS CodeBuild
+CodeBuild integration was suggested by [ericcj](https://github.com/ericcj) and is based on
+the Medium post [Monitor your AWS CodeBuilds via Lambda and Slack](https://hackernoon.com/monitor-your-aws-codebuilds-via-lambda-and-slack-ae2c621f68f1) by
+Randy Findley. 
+
+To enable CodeBuild notifications add a new _CloudWatch Event Rule_, choose _CodeBuild_
+as source and _CodeBuild Build State Change_ as type. As Target select the `aws-to-slack`
+Lambda. You can leave all other settings as is. Once your rule is created all CodeBuild
+build state events will be forwarded to your Slack channel.
 
 
 ## Contributing

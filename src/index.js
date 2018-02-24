@@ -12,6 +12,7 @@ function processIncoming(event) {
 		require("./parsers/beanstalk"),
 		require("./parsers/aws-health"),
 		require("./parsers/inspector"),
+		require("./parsers/codebuild"),
 	];
 
 	// Execute all parsers and use the first successful result
@@ -24,7 +25,11 @@ function processIncoming(event) {
 		return parser.parse(event)
 		.then(result => result ? result : BbPromise.reject()); // reject on empty result
 	}))
-	.catch(() => {
+	.catch(BbPromise.AggregateError, err => {
+		_.forEach(_.compact(err), err => {
+			// Rethrow on internal errors
+			return BbPromise.reject(err);
+		});
 		console.log("No parser was able to parse the message.");
 
 		// Fallback to the generic parser if none other succeeded
@@ -40,6 +45,9 @@ function processIncoming(event) {
 
 		console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
 		return Slack.postMessage(message);
+	})
+	.catch(err => {
+		console.log("ERROR:", err);
 	});
 }
 
