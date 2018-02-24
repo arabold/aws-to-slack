@@ -10,7 +10,8 @@ function processIncoming(event) {
 		require("./parsers/cloudwatch"),
 		require("./parsers/rds"),
 		require("./parsers/beanstalk"),
-		require("./parsers/aws-health")
+		require("./parsers/aws-health"),
+		require("./parsers/inspector"),
 	];
 
 	// Execute all parsers and use the first successful result
