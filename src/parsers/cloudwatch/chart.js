@@ -317,6 +317,11 @@ class AwsCloudWatchChart {
 			}
 		}
 
+		if (!fromTime || !toTime) {
+			// Cannot render a chart without timeframe
+			return "";
+		}
+
 		const diff = (toTime - fromTime);
 		const timeSlots = [];
 		let prevTime = false;
