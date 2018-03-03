@@ -15,7 +15,7 @@ class EmailParser {
 				return BbPromise.resolve(false);
 			}
 
-			// AWS Health Dashboard Message
+			// AWS SES Message
 			console.log("message =", JSON.stringify(message, null, 2));
 			const source = _.get(message, "mail.source");
 			const messageId = _.get(message, "mail.messageId");
