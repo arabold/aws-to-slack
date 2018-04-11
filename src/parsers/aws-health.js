@@ -16,7 +16,6 @@ class AwsHealthParser {
 			}
 
 			// AWS Health Dashboard Message
-			console.log("message =", JSON.stringify(message, null, 2));
 			const accountId = _.get(message, "account");
 			const detailType = _.get(message, "detail-type");
 			const service = _.get(message, "detail.service");

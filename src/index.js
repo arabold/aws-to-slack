@@ -13,7 +13,7 @@ function processIncoming(event) {
 		require("./parsers/aws-health"),
 		require("./parsers/inspector"),
 		require("./parsers/codebuild"),
-		require("./parsers/ses_email"),
+		require("./parsers/ses-received"),
 	];
 
 	// Execute all parsers and use the first successful result
