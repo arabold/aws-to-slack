@@ -18,10 +18,10 @@
     "lodash": "^4.17.5"
   },
   "devDependencies": {
-    "aws-sdk": "^2.202.0",
-    "eslint": "^4.18.1",
-    "eslint-plugin-import": "^2.9.0",
-    "eslint-plugin-lodash": "^2.6.1",
-    "eslint-plugin-promise": "^3.6.0"
+    "aws-sdk": "^2.224.1",
+    "eslint": "^4.19.1",
+    "eslint-plugin-import": "^2.10.0",
+    "eslint-plugin-lodash": "^2.7.0",
+    "eslint-plugin-promise": "^3.7.0"
   }
 }
