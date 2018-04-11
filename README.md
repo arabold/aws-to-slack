@@ -18,9 +18,10 @@ in your own AWS environment and doesn't have any 3rd party dependencies other
 than the Google Charts API for rendering CloudWatch metrics.
 
 Supported notification formats:
+* AWS Code Build
 * AWS Health Dashboard 🆕
-* AWS Code Build 🆕
-* Amazon Inspector 🆕
+* Amazon Inspector
+* Amazon SES Received Notifications 🆕
 * CloudWatch Alarms (incl. Metrics)
 * Elastic Beanstalk
 * RDS
