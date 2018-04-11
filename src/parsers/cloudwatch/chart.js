@@ -417,7 +417,7 @@ class AwsCloudWatchChart {
 			datasetsAsStrings.push(this.extendedEncode(datasets[k], topEdge));
 		}
 
-		const datasetsAsString = datasetsAsStrings.join(",");
+		const datasetsAsString = _.join(datasetsAsStrings, ",");
 
 		const titles = [];
 		for (const km in this.metrics) {
@@ -442,18 +442,18 @@ class AwsCloudWatchChart {
 		// https://image-charts.com/documentation
 		const params = [];
 		params.push("cht=ls");
-		params.push("chxl=0:|"+labels.join("|"));
+		params.push("chxl=0:|" + _.join(labels, "|"));
 		params.push("chxt=x,y");
-		params.push("chco="+colors.join(","));
-		params.push("chls="+styles.join("|"));
-		params.push("chs="+this.width+"x"+this.height);
-		params.push("chxr=1,0,"+topEdge+","+parseInt(topEdge / this.height * 20));
+		params.push("chco=" + _.join(colors, ","));
+		params.push("chls=" + _.join(styles, "|"));
+		params.push("chs=" + this.width+"x"+this.height);
+		params.push("chxr=1,0," + topEdge + "," + parseInt(topEdge / this.height * 20));
 		params.push("chg=20,10,1,5");
-		params.push("chdl="+titles.join("|"));
-		params.push("chd=e:"+datasetsAsString);
+		params.push("chdl=" + _.join(_.map(titles, t => encodeURIComponent(t)), "|"));
+		params.push("chd=e:" + datasetsAsString);
 		params.push("chdlp=b"); // legend at bottom
-		// const url = "https://image-charts.com/chart?" + params.join("&");
-		const url = "https://chart.googleapis.com/chart?" + params.join("&");
+
+		const url = "https://chart.googleapis.com/chart?" + _.join(params, "&");
 		console.log(url);
 
 		return url;
