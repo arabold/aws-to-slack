@@ -37,6 +37,7 @@ rules:
   no-var: error
   valid-jsdoc: [ warn, { prefer: { "arg": "param", "argument": "param", "class": "constructor", "return": "returns", "virtual": "abstract" } } ]
   promise/no-nesting: off
+  promise/valid-params: off # we use Bluebird which isn't supported properly
   import/first: error
   import/newline-after-import: error
   import/no-named-as-default: off
