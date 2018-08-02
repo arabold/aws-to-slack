@@ -31,19 +31,26 @@ Supported notification formats:
 Additional formats will be added; Pull Requests are welcome!
 
 ## Try!
-Ready to try it for yourself? Installation into your own AWS environment is as
-simple as pressing the button below:
+Ready to try it for yourself? 
+
+**If you are in the us-east-1 AWS Region:**
+
+Installation into your own AWS environment is as
+simple as pressing the button below 
 
 [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack/cloudformation.yaml)
 
+**If you are not in the us-east-1 AWS Region**
+
+Please refer to the installation instructions below
 
 ## Installation
 
 ### Step 1 - Setup Slack
-The Lambda function communicates with Slack through a
-[webhook](https://stashimi.slack.com/apps/A0F7XDUAZ-incoming-webhooks):
+The Lambda function communicates with Slack through a Slack webhook
+[webhook](https://your-slack-domain.slack.com/apps/manage). Note that you can either create an app, or a custom integration > Incoming webhook (easier, will only let you add a webhook)
 
-1. Navigate to https://slack.com/apps/A0F7XDUAZ-incoming-webhooks and click
+1. Navigate to https://your-slack-domain.slack.com/apps/manage and click
    "Add Configuration".
 2. Choose the default channel where messages will be sent and click
    "Add Incoming WebHooks Integration".
@@ -54,11 +61,25 @@ The Lambda function communicates with Slack through a
 ![Slack Configuration](./docs/config-slack.png)
 
 ### Step 2 - Configure & Launch the CloudFormation Stack
+
+Note that the AWS region will be the region from which you launch the CloudFormation wizard, which will also scope the resources (SNS, etc.) to that region. 
+
+**If you are launching the CloudFormation Wizard for us-east-1 resources:**
+
 Launch the CloudFormation Stack by using our preconfigured CloudFormation
 [template](https://s3.amazonaws.com/aws-to-slack/cloudformation.yaml) or
 by simply pressing the following button:
 
 [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack/cloudformation.yaml)
+
+**If you are not in the us-east-1 AWS Region:**
+
+- Download the release.zip file and upload it so some AWS S3 Bucket (it only works with s3 URLs, plus the format must be `s3://your-bucket/path-to-file`. 
+- Give public access to this file in S3
+- Make a copy of the cloudformation.yaml file, edit the s3 URL so that it points to your newly uploaded file s3 URL
+- Go to the CloudFormation interface from you region (you can click one of the links above, but make sure to change the region to yours) then click on "upload from file" and send your modified `cloudformation.yaml` file
+
+**Afterwards**
 
 Click "Next" and on the following page name your new stack and paste the
 webhook URL from before into the "HookUrl" field. You can also configure a
