@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
+  CodeUri:
+    Description: The S3 URI of the release zip file
+    Type: String
+    Default: s3://aws-to-slack/release.zip
   HookUrl:
     Description: Slack webhook URL; see https://example.slack.com/apps/
     Type: String
@@ -18,7 +22,7 @@ Resources:
     Properties:
       Handler: src/index.handler
       Runtime: nodejs6.10
-      CodeUri: s3://aws-to-slack/release.zip
+      CodeUri: !Ref CodeUri
       MemorySize: 256
       Timeout: 10
       Policies: CloudWatchReadOnlyAccess

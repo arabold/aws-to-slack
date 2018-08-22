@@ -1,4 +1,5 @@
 AWS_CLI?=/usr/local/bin/aws
+S3_PATH?=aws-to-slack
 TEMP_PATH=.temp
 RELEASE_ZIP=build/release.zip
 
@@ -27,5 +28,5 @@ package:
 
 .PHONY: publish
 publish:
-	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack/" --acl public-read
-	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack/" --acl public-read
+	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://$(S3_PATH)/" --acl public-read
+	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://$(S3_PATH)/" --acl public-read
