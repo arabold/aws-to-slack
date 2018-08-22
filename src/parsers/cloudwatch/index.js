@@ -47,7 +47,7 @@ class CloudWatchParser {
 					title: alarmName,
 					text: reason,
 					fields: [{
-						title: "Acount ID",
+						title: "Account ID",
 						value: accountId,
 						short: true
 					}, {

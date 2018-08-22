@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
@@ -18,7 +19,7 @@ Resources:
     Properties:
       Handler: src/index.handler
       Runtime: nodejs6.10
-      CodeUri: s3://aws-to-slack/release.zip
+      CodeUri: !Sub 's3://aws-to-slack-${AWS::Region}/release.zip'
       MemorySize: 256
       Timeout: 10
       Policies: CloudWatchReadOnlyAccess
