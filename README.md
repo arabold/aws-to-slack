@@ -19,6 +19,7 @@ than the Google Charts API for rendering CloudWatch metrics.
 
 Supported notification formats:
 * AWS Code Build
+* AWS CodeCommit
 * AWS Health Dashboard 🆕
 * Amazon Inspector
 * Amazon SES Received Notifications 🆕
