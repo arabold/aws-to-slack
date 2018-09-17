@@ -13,6 +13,7 @@ function processIncoming(event) {
 		require("./parsers/aws-health"),
 		require("./parsers/inspector"),
 		require("./parsers/codebuild"),
+		require("./parsers/codedeploy"),
 		require("./parsers/ses-received"),
 		require("./parsers/codecommit/pullrequest"),
 		require("./parsers/codecommit/repository"),
