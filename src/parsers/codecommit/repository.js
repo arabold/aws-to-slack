@@ -28,7 +28,7 @@ class CodeCommitRepositoryParser {
 			const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.region}#/repository/${repoName}`;
 			const fields = [];
 
-			let color = Slack.COLORS.neutral;
+			const color = Slack.COLORS.neutral;
 			let title = repoName;
 			if (repoEvent === "referenceCreated" && refType === "branch") {
 				title = `New branch created in repository ${repoName}`;
@@ -59,7 +59,7 @@ class CodeCommitRepositoryParser {
 
 			if (refType) {
 				fields.push({
-					title: refType.charAt(0).toUpperCase() + refType.slice(1),
+					title: _.toUpper(refType.charAt(0)) + refType.slice(1),
 					value: refName,
 					short: true,
 				});
