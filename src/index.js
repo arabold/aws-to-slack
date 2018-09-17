@@ -14,6 +14,8 @@ function processIncoming(event) {
 		require("./parsers/inspector"),
 		require("./parsers/codebuild"),
 		require("./parsers/ses-received"),
+		require("./parsers/codecommit/pullrequest"),
+		require("./parsers/codecommit/repository"),
 	];
 
 	// Execute all parsers and use the first successful result
