@@ -110,6 +110,18 @@ as source and _CodeBuild Build State Change_ as type. As Target select the `aws-
 Lambda. You can leave all other settings as is. Once your rule is created all CodeBuild
 build state events will be forwarded to your Slack channel.
 
+### Setting Up AWS CodeCommit
+
+Similar to the CodeBuild integration, CodeCommit notifications are triggered by
+CloudWatch Event Rules. Create a new CloudWatch Event Rule, select _CodeCommit_
+as the source, and select one of the supported event types:
+
+* _CodeCommit Pull Request State Change_ - Will generate events when a pull
+  request is opened, closed, merged, or updated.
+* _CodeCommit Repository State Change_ - Will generate events when a branch
+  or tag reference is created, updated, or deleted.
+
+Add the `aws-to-slack` lambda as the target. No other settings are needed.
 
 ## Contributing
 
