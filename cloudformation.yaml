@@ -19,7 +19,9 @@ Resources:
     Properties:
       Handler: src/index.handler
       Runtime: nodejs6.10
-      CodeUri: !Sub 's3://aws-to-slack-${AWS::Region}/release.zip'
+      CodeUri:
+        Bucket: !Sub "aws-to-slack-${AWS::Region}"
+        Key: release.zip
       MemorySize: 256
       Timeout: 10
       Policies: CloudWatchReadOnlyAccess
