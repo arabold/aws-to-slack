@@ -7,44 +7,44 @@ const BbPromise = require("bluebird"),
 class CodeDeployParser {
 
 	parse(event) {
-		return BbPromise.try(() => JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
+		return BbPromise.try(() => _.isObject(event) ? event : JSON.parse(event))
 		.catch(_.noop) // ignore JSON errors
-		.then(message => {
-			if (!_.has(message, "deploymentId") || !_.has(message, "deploymentGroupName")) {
+		.then(event => {
+			if (_.get(event, "source") !== "aws.codedeploy") {
 				return BbPromise.resolve(false);
 			}
 
-			const time = new Date(_.get(event, "Records[0].Sns.Timestamp"));
-			const deployStatus = _.get(message, "status");
-			const deploymentGroup = _.get(message, "deploymentGroupName");
-			const deploymentId = _.get(message, "deploymentId");
-			const app = _.get(message, "applicationName");
-			const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${message.region}#/deployments/${deploymentId}`;
+			const time = new Date(_.get(event, "time"));
+			const deployState = _.get(event, "detail.state");
+			const deploymentGroup = _.get(event, "detail.deploymentGroup");
+			const deploymentId = _.get(event, "detail.deploymentId");
+			const app = _.get(event, "detail.application");
+			const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.region}#/deployments/${deploymentId}`;
 			const fields = [];
 
 			let color = Slack.COLORS.neutral;
 			const baseTitle = `CodeDeploy Application ${app}`;
 			let title = baseTitle;
-			if (deployStatus === "SUCCEEDED") {
+			if (deployState === "SUCCESS") {
 				title = `<${statusUrl}|${baseTitle}> has finished`;
 				color = Slack.COLORS.ok;
 			}
-			else if (deployStatus === "STOPPED") {
+			else if (deployState === "STOP") {
 				title = `<${statusUrl}|${baseTitle}> was stopped`;
 				color = Slack.COLORS.warning;
 			}
-			else if (deployStatus === "FAILED") {
+			else if (deployState === "FAILURE") {
 				title = `<${statusUrl}|${baseTitle}> has failed`;
 				color = Slack.COLORS.critical;
 			}
-			else if (deployStatus === "CREATED") {
+			else if (deployState === "START") {
 				title = `<${statusUrl}|${baseTitle}> has started deploying`;
 			}
 
-			if (deployStatus) {
+			if (deployState) {
 				fields.push({
 					title: "Status",
-					value: deployStatus,
+					value: deployState,
 					short: true
 				});
 			}
@@ -58,7 +58,7 @@ class CodeDeployParser {
 			const slackMessage = {
 				attachments: [{
 					author_name: "AWS CodeDeploy Notification",
-					fallback: `${baseTitle} ${deployStatus}`,
+					fallback: `${baseTitle} ${deployState}`,
 					color: color,
 					title: title,
 					fields: fields,
