@@ -4,7 +4,7 @@ const BbPromise = require("bluebird"),
 	_ = require("lodash"),
 	Slack = require("../slack");
 
-class CodeDeployParser {
+class CodeDeploySNSParser {
 
 	parse(event) {
 		return BbPromise.try(() => JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
@@ -71,4 +71,4 @@ class CodeDeployParser {
 	}
 }
 
-module.exports = CodeDeployParser;
+module.exports = CodeDeploySNSParser;
