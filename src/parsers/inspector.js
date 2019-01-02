@@ -4,8 +4,8 @@
  * See: https://console.aws.amazon.com/inspector/home
  */
 
-const BbPromise = require("bluebird"),
-	_ = require("lodash"),
+const _ = require("lodash"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
 /**
@@ -60,7 +60,7 @@ const ruleMappings = {
 	],
 };
 
-class InspectorParser {
+class InspectorParser extends SNSParser {
 
 	_getUrlForRun(kind, runArn) {
 		const parsedRun = /arn:aws:inspector:(.*?):[0-9]+:.*/.exec(runArn);
@@ -81,111 +81,106 @@ class InspectorParser {
 		return `${ruleName}: ${val}`;
 	}
 
-	parse(event) {
-		return BbPromise.try(() => JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
-		.catch(_.noop) // ignore JSON errors
-		.then(message => {
-			const template = _.get(message, "template", "");
-			if (!_.startsWith(template, "arn:aws:inspector")) {
-				// Not of interest for us
-				return BbPromise.resolve(false);
-			}
+	handleMessage(message) {
+		const template = _.get(message, "template", "");
+		if (!_.startsWith(template, "arn:aws:inspector")) {
+			// Not of interest for us
+			return false;
+		}
 
-			const time = new Date(_.get(message, "time"));
-			const target = _.get(message, "target", "");
-			const newState = _.get(message, "newstate", "");
-			const run = _.get(message, "run", "");
-			const findingsCount = _.get(message, "findingsCount", "");
-			const finding = _.get(message, "finding", "");
-			const inspectorEvent = _.get(message, "event", "");
+		const time = new Date(_.get(message, "time"));
+		const target = _.get(message, "target", "");
+		const newState = _.get(message, "newstate", "");
+		const run = _.get(message, "run", "");
+		const findingsCount = _.get(message, "findingsCount", "");
+		const finding = _.get(message, "finding", "");
+		const inspectorEvent = _.get(message, "event", "");
 
-			let title = "";
-			let text = "";
+		let title = "";
+		let text = "";
 
-			const fields = [{
-				title: "Target",
-				value: target,
+		const fields = [{
+			title: "Target",
+			value: target,
+			short: false
+		}];
+		if (!_.isEmpty(run)) {
+			fields.push({
+				title: "Run",
+				value: "<" + this._getUrlForRun("run", run) + `|${run}>\n`,
 				short: false
-			}];
-			if (!_.isEmpty(run)) {
-				fields.push({
-					title: "Run",
-					value: "<" + this._getUrlForRun("run", run) + `|${run}>\n`,
-					short: false
-				});
-			}
+			});
+		}
 
-			// We use a color and text depending on the events
-			let color = Slack.COLORS.neutral;
-			switch (inspectorEvent) {
-			case "ASSESSMENT_RUN_STARTED":
-				title = "Assessment run started";
-				color = Slack.COLORS.ok;
-				break;
-			case "ASSESSMENT_RUN_COMPLETED":
-				title = "Assessment run summary";
-				color = Slack.COLORS.ok;
-				text += "*<" + this._getUrlForRun("finding", run) + "|Findings>*\n";
-				if (!_.isEmpty(findingsCount)) {
-					const parsedFindings = _.split(_.replace(findingsCount, /{|}/g, ""), ",");
-					text += _.join(_.map(parsedFindings, parsedFinding => this._formatFinding(parsedFinding)), "\n");
-				}
-				break;
-			case "FINDING_REPORTED":
-				title = "Finding reported";
-				color = Slack.COLORS.warning;
-				text = finding;
-				break;
-			case "ASSESSMENT_RUN_STATE_CHANGED":
-				title = "Assessment run";
-				switch (newState) {
-				case "COMPLETED":
-					text = "Completed";
-					break;
-				case "CREATED":
-					text = "Created";
-					break;
-				case "START_DATA_COLLECTION_PENDING":
-					text = "Starting data collection";
-					break;
-				case "COLLECTING_DATA":
-					text = "Collecting data";
-					break;
-				case "STOP_DATA_COLLECTION_PENDING":
-					text = "Stopping data collection";
-					break;
-				case "DATA_COLLECTED":
-					text = "Data collected";
-					break;
-				case "START_EVALUATING_RULES_PENDING":
-					text = "Start evaluating rules";
-					break;
-				case "EVALUATING_RULES":
-					text = "Evaluating rules";
-					break;
-				default:
-					text = newState;
-				}
-				break;
-			case "ENABLE_ASSESSMENT_NOTIFICATIONS":
-				// We ignore the notification setup notifications as they are superfluous.
-				return BbPromise.resolve(false);
+		// We use a color and text depending on the events
+		let color = Slack.COLORS.neutral;
+		switch (inspectorEvent) {
+		case "ASSESSMENT_RUN_STARTED":
+			title = "Assessment run started";
+			color = Slack.COLORS.ok;
+			break;
+		case "ASSESSMENT_RUN_COMPLETED":
+			title = "Assessment run summary";
+			color = Slack.COLORS.ok;
+			text += "*<" + this._getUrlForRun("finding", run) + "|Findings>*\n";
+			if (!_.isEmpty(findingsCount)) {
+				const parsedFindings = _.split(_.replace(findingsCount, /{|}/g, ""), ",");
+				text += _.join(_.map(parsedFindings, parsedFinding => this._formatFinding(parsedFinding)), "\n");
 			}
+			break;
+		case "FINDING_REPORTED":
+			title = "Finding reported";
+			color = Slack.COLORS.warning;
+			text = finding;
+			break;
+		case "ASSESSMENT_RUN_STATE_CHANGED":
+			title = "Assessment run";
+			switch (newState) {
+			case "COMPLETED":
+				text = "Completed";
+				break;
+			case "CREATED":
+				text = "Created";
+				break;
+			case "START_DATA_COLLECTION_PENDING":
+				text = "Starting data collection";
+				break;
+			case "COLLECTING_DATA":
+				text = "Collecting data";
+				break;
+			case "STOP_DATA_COLLECTION_PENDING":
+				text = "Stopping data collection";
+				break;
+			case "DATA_COLLECTED":
+				text = "Data collected";
+				break;
+			case "START_EVALUATING_RULES_PENDING":
+				text = "Start evaluating rules";
+				break;
+			case "EVALUATING_RULES":
+				text = "Evaluating rules";
+				break;
+			default:
+				text = newState;
+			}
+			break;
+		case "ENABLE_ASSESSMENT_NOTIFICATIONS":
+			// We ignore the notification setup notifications as they are superfluous.
+			return false;
+		}
 
-			const slackMessage = {
-				attachments: [{
-					author_name: "Amazon Inspector",
-					fallback: text,
-					color: color,
-					title: title,
-					text: text,
-					fields: fields,
-					mrkdwn_in: [ "text" ],
-					ts: Slack.toEpochTime(time)
-				}]
-			};
-			return BbPromise.resolve(slackMessage);
-		});
+		return {
+			attachments: [{
+				author_name: "Amazon Inspector",
+				fallback: text,
+				color: color,
+				title: title,
+				text: text,
+				fields: fields,
+				mrkdwn_in: [ "text" ],
+				ts: Slack.toEpochTime(time)
+			}]
+		};
 	}
 }
 
