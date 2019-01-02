@@ -72,11 +72,7 @@
 	```
 */
 
-const BbPromise = require("bluebird")
-	, AWS = require("aws-sdk")
-	, https = require("https")
-	, url = require("url")
-	, fs = require("fs")
+const AWS = require("aws-sdk")
 	, _ = require("lodash");
 
 
@@ -177,7 +173,7 @@ class AwsCloudWatchChart {
 					m.thickness = parseInt(params[k], 10);
 				}
 				else if (kl === "dashed") {
-					m.dashed = (params[k] ? true : false);
+					m.dashed = !!params[k];
 				}
 				else if (kl === "dimensions") {
 					// merge to dimensions
@@ -195,37 +191,31 @@ class AwsCloudWatchChart {
 		return m;
 	}
 
-	getFromTimeString() {
-		const i = new Date;
-		i.setTime(i.getTime() - this.timeOffset*60*1000);
-		return (i.getUTCMonth() + 1) + "/" + i.getUTCDate() + " " + ("0" +
-			i.getUTCHours()).slice(-2) + ":" + ("0" + i.getUTCMinutes()).slice(-2);
+	async getChart() {
+		await Promise.all(_.invokeMap(this.metrics, metrics => metrics.getStatistics()));
+		return this;
 	}
 
-	getToTimeString() {
-		const i = new Date;
-		return (i.getUTCMonth() + 1) + "/" + i.getUTCDate() + " " + ("0" +
-			i.getUTCHours()).slice(-2) + ":" + ("0" + i.getUTCMinutes()).slice(-2);
-	}
+	async listMetrics(Namespace, MetricName) {
+		return new Promise((resolve, reject) => {
+			if (_.isEmpty(Namespace)) {
+				Namespace = "AWS/EC2";
+			}
+			if (_.isEmpty(MetricName)) {
+				MetricName = "CPUUtilization";
+			}
 
-	getChart() {
-		return BbPromise.map(this.metrics, metrics => metrics.getStatistics())
-		.return(this);
-	}
+			const params = { Namespace, MetricName };
 
-	listMetrics(Namespace, MetricName) {
-		if (_.isEmpty(Namespace)) {
-			Namespace = "AWS/EC2";
-		}
-		if (_.isEmpty(MetricName)) {
-			MetricName = "CPUUtilization";
-		}
-
-		const params = { Namespace: Namespace, MetricName: MetricName };
-
-		return BbPromise.fromCallback(cb => this.cloudwatch.listMetrics(params, cb))
-		.then(data => data.Metrics)
-		.catch(err => BbPromise.reject(new Error("Error loading metrics list: " + err.toString())));
+			this.cloudwatch.listMetrics(params, (err, data) => {
+				if (err) {
+					reject(err);
+				}
+				else {
+					resolve(data.Metrics);
+				}
+			});
+		});
 	}
 
 	extendedEncode(arrVals, maxVal) {
@@ -253,43 +243,31 @@ class AwsCloudWatchChart {
 		return chartData;
 	}
 
-	save(filename) {
-		const url = this.getURL();
-
+	async save(filename) {
+		const fs = require("fs");
 		const file = fs.createWriteStream(filename);
-		return new BbPromise((resolve, reject) => {
-			https.get(url, response => {
-				response.pipe(file);
+
+		try {
+			// wait for file-close
+			await new Promise(resolve => {
 				file.on("finish", () => {
 					file.close(() => resolve(filename)); // close() is async,
 				});
-			}).on("error", err => {
-				fs.unlink(filename);
-				reject(err);
 			});
-		});
+
+			(await this.getAsStream()).pipe(file);
+		}
+		catch (err) {
+			fs.unlink(filename);
+			throw err;
+		}
 	}
 
-	get() {
-		const requestSettings = url.parse(this.getURL());
-		requestSettings.method = "GET";
-
-		return new BbPromise((resolve, reject) => {
-			https.request(requestSettings, response => {
-				const chunks = [];
-				response.on("data", chunk => chunks.push(chunk));
-				response.on("error", err => {
-					reject(err);
-				});
-				response.on("end", () => {
-					resolve({
-						body: Buffer.concat(chunks),
-						statusCode: response.statusCode,
-						statusMessage: response.statusMessage,
-					});
-				});
-				return response;
-			});
+	getAsStream() {
+		return new Promise((resolve, reject) => {
+			require("https")
+				.get(this.getURL(), resolve)
+				.on("error", reject);
 		});
 	}
 
@@ -318,8 +296,7 @@ class AwsCloudWatchChart {
 		}
 
 		if (!fromTime || !toTime) {
-			// Cannot render a chart without timeframe
-			return "";
+			throw "Cannot render a chart without timeframe";
 		}
 
 		const diff = (toTime - fromTime);
@@ -440,23 +417,21 @@ class AwsCloudWatchChart {
 		}
 
 		// https://image-charts.com/documentation
-		const params = [];
-		params.push("cht=ls");
-		params.push("chxl=0:|" + _.join(labels, "|"));
-		params.push("chxt=x,y");
-		params.push("chco=" + _.join(colors, ","));
-		params.push("chls=" + _.join(styles, "|"));
-		params.push("chs=" + this.width+"x"+this.height);
-		params.push("chxr=1,0," + topEdge + "," + parseInt(topEdge / this.height * 20));
-		params.push("chg=20,10,1,5");
-		params.push("chdl=" + _.join(_.map(titles, t => encodeURIComponent(t)), "|"));
-		params.push("chd=e:" + datasetsAsString);
-		params.push("chdlp=b"); // legend at bottom
+		const params = [
+			"cht=ls",
+			"chxl=0:|" + _.join(labels, "|"),
+			"chxt=x,y",
+			"chco=" + _.join(colors, ","),
+			"chls=" + _.join(styles, "|"),
+			"chs=" + this.width+"x"+this.height,
+			"chxr=1,0," + topEdge + "," + parseInt(topEdge / this.height * 20, 10),
+			"chg=20,10,1,5",
+			"chdl=" + _.join(_.map(titles, t => encodeURIComponent(t)), "|"),
+			"chd=e:" + datasetsAsString,
+			"chdlp=b", // legend at bottom
+		];
 
-		const url = "https://chart.googleapis.com/chart?" + _.join(params, "&");
-		console.log(url);
-
-		return url;
+		return "https://chart.googleapis.com/chart?" + _.join(params, "&");
 	}
 }
 
@@ -483,31 +458,36 @@ class AwsCloudWatchChartMetric {
 	}
 
 	getStatistics() {
-		const toTime = new Date();
-		const fromTime = new Date();
+		return new Promise((resolve, reject) => {
+			const toTime = new Date();
+			const fromTime = new Date();
 
-		fromTime.setTime(toTime.getTime() - this.AwsCloudWatchChart.timeOffset * 60 * 1000);
+			fromTime.setTime(toTime.getTime() - this.AwsCloudWatchChart.timeOffset * 60 * 1000);
 
-		const params = {
-			EndTime: toTime,
-			StartTime: fromTime,
-			MetricName: this.MetricName,
-			Namespace: this.Namespace,
-			Period: this.AwsCloudWatchChart.timePeriod,
-			Statistics: [ _.upperFirst(_.toLower(this.statisticValues)) ],
-			Dimensions: this.Dimensions,
-			Unit: this.Unit
-		};
+			const params = {
+				EndTime: toTime,
+				StartTime: fromTime,
+				MetricName: this.MetricName,
+				Namespace: this.Namespace,
+				Period: this.AwsCloudWatchChart.timePeriod,
+				Statistics: [_.upperFirst(_.toLower(this.statisticValues))],
+				Dimensions: this.Dimensions,
+				Unit: this.Unit
+			};
 
-		return BbPromise.fromCallback(cb => this.cloudwatch.getMetricStatistics(params, cb))
-		.then(data => {
-			for (const k in data.Datapoints) {
-				this.statistics.push(data.Datapoints[k]);
-			}
-			this.isLoaded = true;
-			return BbPromise.resolve(this.statistics);
-		})
-		.catch(err => BbPromise.reject(new Error("Error loading statistics: " + err.toString())));
+			this.cloudwatch.getMetricStatistics(params, (err, data) => {
+				if (err) {
+					reject(err);
+				}
+				else {
+					for (const k in data.Datapoints) {
+						this.statistics.push(data.Datapoints[k]);
+					}
+					this.isLoaded = true;
+					resolve(this.statistics);
+				}
+			});
+		});
 	}
 
 	getTitle() {
