@@ -1,40 +1,76 @@
 "use strict";
 
-const BbPromise = require("bluebird"),
-	_ = require("lodash"),
+const _ = require("lodash"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
-class GenericParser {
+class GenericParser extends SNSParser {
 
-	parse(event) {
-		return BbPromise.try(() => {
-			let text, time, title;
-			if (_.has(event, "Records[0].Sns.Message")) {
-				// Output the SNS message body
-				title = _.get(event, "Records[0].Sns.Subject");
-				text = _.get(event, "Records[0].Sns.Message");
-				time = new Date(_.get(event, "Records[0].Sns.Timestamp"));
+	async parse(event) {
+		try {
+			// Attempt to treat as JSON-based SNS message
+			const resp = await super.parse(event);
+			if (resp) {
+				return resp;
 			}
-			else {
-				// Serialize the whole event data
-				text = event;
-			}
+		}
+		catch (err) {
+			// do nothing
+		}
 
-			if (!_.isString(text)) {
-				text = JSON.stringify(text, null, 2);
-			}
+		// Serialize the whole event data
+		const fields = this.objectToFields(event);
+		const text = fields ? undefined : JSON.stringify(event, null, 2);
 
-			const slackMessage = {
-				attachments: [{
-					fallback: text,
-					color: Slack.COLORS.neutral,
-					ts: Slack.toEpochTime(time ? time : new Date()),
-					title,
-					text
-				}]
-			};
-			return BbPromise.resolve(slackMessage);
-		});
+		return {
+			attachments: [{
+				color: Slack.COLORS.neutral,
+				ts: Slack.toEpochTime(new Date()),
+				title: "Raw Event",
+				fallback: text,
+				text,
+				fields,
+			}]
+		};
+	}
+
+	handleMessage(message, record) {
+		const title = _.get(record, "Sns.Subject");
+		const time = new Date(_.get(record, "Sns.Timestamp"));
+		const fields = this.objectToFields(message);
+		const fallback = JSON.stringify(message);
+		const text = fields ? undefined : fallback;
+
+		return {
+			attachments: [{
+				color: Slack.COLORS.neutral,
+				ts: Slack.toEpochTime(time || new Date()),
+				fields,
+				title,
+				text,
+				fallback,
+			}]
+		};
+	}
+
+	objectToFields(obj) {
+		let fields;
+		const keys = _.keys(obj);
+		if (0 < keys.length && keys.length <= 8) {
+			fields = [];
+			for (const key in keys) {
+				let val = obj[key];
+				if (!_.isString(val)) {
+					val = JSON.stringify(val);
+				}
+				fields.push({
+					title: key,
+					value: val,
+					short: val.length < 20,
+				});
+			}
+		}
+		return fields;
 	}
 }
 
