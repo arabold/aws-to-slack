@@ -2,7 +2,6 @@
 
 const url = require("url")
 	, https = require("https")
-	, BbPromise = require("bluebird")
 	, _ = require("lodash");
 
 /** The Slack hook URL */
@@ -14,20 +13,6 @@ const slackChannel = process.env.SLACK_CHANNEL;
  * Slack Helper Utility
  */
 class Slack {
-
-	/**
-	 * Set of predefined colors for different alert levels
-	 */
-	static get COLORS() {
-		return {
-			critical: "danger",  // "#FF324D",
-			warning:  "warning", // "#FFD602",
-			ok:       "good",    // "#8CC800",
-			accent:   "#1E90FF",
-			neutral:  "#A8A8A8"
-		};
-	}
-
 	/**
 	 * Converts a given {@link Date} object to a Slack-compatible epoch timestamp.
 	 *
@@ -35,7 +20,7 @@ class Slack {
 	 * @returns {Integer} Epoch time
 	 */
 	static toEpochTime(date) {
-		return date.getTime()/1000|0;
+		return date.getTime() / 1000 | 0;
 	}
 
 	/**
@@ -45,58 +30,112 @@ class Slack {
 	 * @returns {Promise} Fulfills on success, rejects on error.
 	 */
 	static postMessage(message) {
-		console.log("Posting to Slack...");
-		return new BbPromise((resolve, reject) => {
-			message = _.clone(message);
-			if (_.isEmpty(message.channel) && !_.isEmpty(slackChannel)) {
-				message.channel = slackChannel;
-			}
+		if (_.isEmpty(message.channel) && !_.isEmpty(slackChannel)) {
+			message.channel = slackChannel;
+		}
 
-			const body = JSON.stringify(message);
-			const options = url.parse(hookUrl);
-			options.method = "POST";
-			options.headers = {
-				"Content-Type": "application/json",
-				"Content-Length": Buffer.byteLength(body),
-			};
+		return retry(3, async () => {
+			const response = await postJson(message, hookUrl);
+			const statusCode = response.statusCode;
 
-			const postReq = https.request(options, res => {
-				const chunks = [];
-				res.setEncoding("utf8");
-				res.on("data", chunk => chunks.push(chunk));
-				res.on("error", err => {
-					reject(err);
-				});
-				res.on("end", () => {
-					resolve({
-						body: chunks.join(""),
-						statusCode: res.statusCode,
-						statusMessage: res.statusMessage,
-					});
-				});
-				return res;
-			});
-
-			postReq.write(body);
-			postReq.end();
-		})
-		.then(response => {
-			if (response.statusCode < 400) {
+			if (200 <= statusCode && statusCode < 300) {
 				console.info("Message posted successfully.");
-				return BbPromise.resolve();
+				return response;
 			}
-			else if (response.statusCode < 500) {
-				console.error(`Error posting message to Slack API: ${response.statusCode} - ${response.statusMessage}`);
-				return BbPromise.resolve();
+			if (400 <= statusCode && statusCode < 500) {
+				const e = new Error(`Slack API reports bad request [HTTP:${response.statusCode}] ${response.statusMessage}: ${response.body}`);
+				e.retryable = false;
+				throw e;
 			}
 
-			return BbPromise.reject(new Error(`Server error when processing message: ${response.statusCode} - ${response.statusMessage}`));
-		})
-		.tapCatch(err => {
-			console.log("Error posting to Slack:", err);
+			throw `Slack API error [HTTP:${response.statusCode}]: ${response.body}`;
 		});
 	}
+}
 
+/**
+ * Set of predefined colors for different alert levels
+ */
+Slack.COLORS = {
+	critical: "danger",  // "#FF324D",
+	warning: "warning", // "#FFD602",
+	ok: "good",    // "#8CC800",
+	accent: "#1E90FF",
+	neutral: "#A8A8A8",
+};
+
+/**
+ * Wait for specified number of milliseconds.
+ *
+ * @param {Number} ms Milliseconds to wait
+ * @returns {Promise<any>} _nothing_
+ */
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Await function return value repeatedly.
+ * Allows Error.retryable=false to override retry behavior.
+ *
+ * @param {Number} retries Maximum number of times to call function
+ * @param {Function} func Function to call
+ * @returns {Promise<*>} Return value of function
+ */
+async function retry(retries, func) {
+	let numTries = 0;
+	for (; ;) {
+		try {
+			return await func();
+		}
+		catch (e) {
+			if ((_.isUndefined(e.retryable) || e.retryable) && ++numTries < retries) {
+				// Exponential back-off
+				const waitFor = Math.pow(2, numTries) * 200;
+				console.error(`[ERROR-Retryable] attempt#${numTries}, waiting ${waitFor}ms]:`, e);
+				await sleep(waitFor);
+				continue;
+			}
+			throw e;
+		}
+	}
+}
+
+/**
+ * Post specified data to HTTPS endpoint.
+ *
+ * @param {{}} data Data to stringify
+ * @param {string} endpoint HTTPS URL destination
+ * @returns {Promise<{}>} Response description
+ */
+function postJson(data, endpoint) {
+	return new Promise((resolve, reject) => {
+		const body = JSON.stringify(data);
+		const options = url.parse(endpoint);
+		options.method = "POST";
+		options.headers = {
+			"Content-Type": "application/json",
+			"Content-Length": Buffer.byteLength(body),
+		};
+
+		const postReq = https.request(options, res => {
+			const chunks = [];
+			res.setEncoding("utf8");
+			res.on("data", chunks.push.bind(chunks));
+			res.on("error", reject);
+			res.on("end", () => {
+				resolve({
+					body: chunks.join(""),
+					statusCode: res.statusCode,
+					statusMessage: res.statusMessage,
+				});
+			});
+			return res;
+		});
+
+		postReq.write(body);
+		postReq.end();
+	});
 }
 
 module.exports = Slack;
