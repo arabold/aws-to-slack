@@ -1,64 +1,71 @@
 "use strict";
 
-const BbPromise = require("bluebird"),
-	_ = require("lodash"),
-	Slack = require("./slack");
-
-function processIncoming(event) {
-	const GenericParser = require("./parsers/generic");
-	const parsers = [
+const _ = require("lodash"),
+	Slack = require("./slack"),
+	GenericParser = require("./parsers/generic"),
+	parsers = [
 		require("./parsers/cloudwatch"),
-		require("./parsers/rds"),
-		require("./parsers/beanstalk"),
-		require("./parsers/aws-health"),
-		require("./parsers/inspector"),
-		require("./parsers/codebuild"),
-		require("./parsers/codedeploy"),
-		require("./parsers/ses-received"),
 		require("./parsers/codecommit/pullrequest"),
 		require("./parsers/codecommit/repository"),
+		require("./parsers/autoscaling"),
+		require("./parsers/aws-health"),
+		require("./parsers/beanstalk"),
+		require("./parsers/codebuild"),
+		require("./parsers/codedeploy"),
+		require("./parsers/inspector"),
+		require("./parsers/rds"),
+		require("./parsers/ses-received"),
 	];
 
+async function processIncoming(event) {
+	if (_.isString(event)) {
+		try {
+			event = JSON.parse(event);
+		}
+		catch (err) {
+			console.error(`Error parsing event JSON (continuing...): ${event}`);
+		}
+	}
+
 	// Execute all parsers and use the first successful result
-	return BbPromise.any(_.map(parsers, Parser => {
-		if (_.isEmpty(event)) {
-			return BbPromise.resolve();
+	let message;
+	for (const parser in parsers) {
+		try {
+			message = await ((new parser()).parse(event));
+			if (message) {
+				// Truthy but empty message will stop execution
+				if (message === true || _.isEmpty(message)) {
+					console.error(`Parser stopping execution: ${parser}`);
+					return null;
+				}
+				break;
+			}
 		}
-
-		const parser = new Parser();
-		return parser.parse(event)
-		.then(result => result ? result : BbPromise.reject()); // reject on empty result
-	}))
-	.catch(BbPromise.AggregateError, err => {
-		_.forEach(_.compact(err), err => {
-			// Rethrow on internal errors
-			return BbPromise.reject(err);
-		});
-		console.log("No parser was able to parse the message.");
-
+		catch (e) {
+			console.error(`[Error parsing event][${parser}] ${e}`);
+		}
+	}
+	if (!message) {
 		// Fallback to the generic parser if none other succeeded
-		const parser = new GenericParser();
-		return parser.parse(event);
-	})
-	.then(message => {
-		// Finally forward the message to Slack
-		if (_.isEmpty(message)) {
-			console.log("Skipping empty message.");
-			return BbPromise.resolve();
-		}
+		console.log("No parser was able to parse the message.");
+		message = await (new GenericParser).parse(event);
+	}
 
-		console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
-		return Slack.postMessage(message);
-	})
-	.catch(err => {
-		console.log("ERROR:", err);
-	});
+	// Finally forward the message to Slack
+	console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
+	await Slack.postMessage(message);
 }
 
-module.exports.handler = (event, context, callback) => {
+module.exports.handler = async (event, context, callback) => {
 	context.callbackWaitsForEmptyEventLoop = false;
-
-	// no return here as we're invoking the callback directly
 	console.log("Incoming Message:", JSON.stringify(event, null, 2));
-	BbPromise.resolve(processIncoming(event)).asCallback(callback);
+
+	try {
+		await processIncoming(event);
+		callback();
+	}
+	catch (e) {
+		console.log("ERROR:", e);
+		callback(e);
+	}
 };

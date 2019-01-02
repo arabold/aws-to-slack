@@ -1,5 +1,8 @@
 ---
 # Based on the AirBnb JavaScript styleguides with our own twist
+parserOptions:
+  ecmaVersion: 8
+  sourceType: module
 env:
   es6: true
   node: true
