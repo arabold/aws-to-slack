@@ -3,7 +3,7 @@
 const _ = require("lodash"),
 	Slack = require("../slack");
 
-class SNSParser extends SNSParser {
+class SNSParser {
 
 	async parse(event) {
 		const attachments = [],

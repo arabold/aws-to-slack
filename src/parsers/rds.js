@@ -1,7 +1,7 @@
 "use strict";
 
 const _ = require("lodash"),
-	SNSParser = require("sns"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
 class GenericParser extends SNSParser {
