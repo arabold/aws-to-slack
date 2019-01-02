@@ -49,4 +49,4 @@ rules:
   lodash/preferred-alias: off
   lodash/prop-shorthand: off
   lodash/prefer-constant: off
-  lodash/prefer-lodash-method: [ error, { ignoreObjects: [ BbPromise, router, "React\\.Children" ] } ]
+  lodash/prefer-lodash-method: [ error, { ignoreObjects: [ ] } ]

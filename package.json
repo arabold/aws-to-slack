@@ -3,6 +3,9 @@
   "version": "1.1.7",
   "description": "Forward AWS Notification Messages to Slack",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=8.10.0"
+  },
   "scripts": {
     "test": "node src/test",
     "lint": "eslint . --ext .jsx --ext .js || exit 0"
@@ -14,7 +17,6 @@
     "url": "https://github.com/arabold/aws-to-slack.git"
   },
   "dependencies": {
-    "bluebird": "^3.5.2",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
