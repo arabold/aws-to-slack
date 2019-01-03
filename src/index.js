@@ -29,7 +29,7 @@ async function processIncoming(event) {
 
 	// Execute all parsers and use the first successful result
 	let message;
-	for (let i = 0; i < parsers.length; i++) {
+	for (const i in parsers) {
 		const parser = parsers[i];
 		try {
 			message = await ((new parser()).parse(event));
