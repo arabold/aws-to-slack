@@ -7,7 +7,7 @@ const _ = require("lodash"),
 class AutoScalingParser extends SNSParser {
 
 	handleMessage(message) {
-		if (_.has(message, "AutoScalingGroupARN")) {
+		if (!_.has(message, "AutoScalingGroupARN")) {
 			// Not of interest for us
 			return false;
 		}
@@ -42,7 +42,7 @@ class AutoScalingParser extends SNSParser {
 				text,
 				fallback: text,
 				color: Slack.COLORS.neutral,
-				ts: Slack.toEpochTime(time || new Date()),
+				ts: Slack.toEpochTime(time ? new Date(time) : new Date()),
 				fields: [{
 					title: "Service",
 					value: service,
