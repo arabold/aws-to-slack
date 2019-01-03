@@ -29,7 +29,8 @@ async function processIncoming(event) {
 
 	// Execute all parsers and use the first successful result
 	let message;
-	for (const parser in parsers) {
+	for (let i = 0; i < parsers.length; i++) {
+		const parser = parsers[i];
 		try {
 			message = await ((new parser()).parse(event));
 			if (message) {
@@ -51,17 +52,19 @@ async function processIncoming(event) {
 		message = await (new GenericParser).parse(event);
 	}
 
-	// Finally forward the message to Slack
-	console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
-	await Slack.postMessage(message);
+	return message;
 }
+
+module.exports.processEvent = processIncoming;
 
 module.exports.handler = async (event, context, callback) => {
 	context.callbackWaitsForEmptyEventLoop = false;
 	console.log("Incoming Message:", JSON.stringify(event, null, 2));
 
 	try {
-		await processIncoming(event);
+		const message = await processIncoming(event);
+		console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
+		await Slack.postMessage(message);
 		callback();
 	}
 	catch (e) {
