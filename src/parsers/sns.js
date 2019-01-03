@@ -20,7 +20,10 @@ class SNSParser {
 
 			const keys = _.keys(slackMessage);
 			if (keys.length === 1 && keys[0] === "attachments") {
-				attachments.concat(slackMessage.attachments);
+				let _;
+				while (_ = slackMessage.attachments.shift()) {
+					attachments.push(_);
+				}
 			}
 			else {
 				// send solo
@@ -29,6 +32,10 @@ class SNSParser {
 		}));
 
 		if (attachments.length) {
+			if (!in_flight.length) {
+				// this is very important for testing purposes
+				return { attachments };
+			}
 			// send all attachments at once
 			in_flight.push(Slack.postMessage({ attachments }));
 		}
