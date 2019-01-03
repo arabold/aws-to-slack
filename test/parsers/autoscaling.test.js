@@ -1,7 +1,8 @@
 /* eslint-disable */
 
-require("./_parser").matchesEvent("parsers/autoscaling", {
-	Records: [{
+require("./_parser")
+	.named("autoscaling")
+	.matchesEvent({ Records: [{
 		"EventVersion": "1.0",
 		"EventSubscriptionArn": `arn:aws:sns:region:account-id:topicname:subscriptionid`,
 		"EventSource": "aws:sns",
@@ -27,5 +28,4 @@ require("./_parser").matchesEvent("parsers/autoscaling", {
 			"TopicArn": `arn:aws:sns:region:account-id:topicname`,
 			"Subject": "TestInvoke"
 		}
-	}]
-});
+	}] });
