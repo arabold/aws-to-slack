@@ -10,7 +10,13 @@ class SNSParser {
 			in_flight = [];
 
 		await Promise.all(_.map(event.Records, async (record) => {
-			const message = JSON.parse(_.get(record, "Sns.Message"));
+			let message;
+			try {
+				message = JSON.parse(_.get(record, "Sns.Message"));
+			}
+			catch (err) {
+				return;// do nothing
+			}
 			const slackMessage = await this.handleMessage(message, event);
 			if (!slackMessage) {
 				return;

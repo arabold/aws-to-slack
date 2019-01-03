@@ -15,26 +15,29 @@ class ParserMock {
 		this.name = name;
 	}
 
-	matchesEvent(event) {
-		const type = this.name;
-		const parser = require(`../../src/parsers/${type}`);
+	makeNew() {
+		const parser = require(`../../src/parsers/${this.name}`);
+		return new parser();
+	}
 
-		test(`Parser[${type}] exists`, () => {
+	matchesEvent(event) {
+		test(`Parser[${this.name}] exists`, () => {
+			const parser = require(`../../src/parsers/${this.name}`);
 			expect(parser).toEqual(expect.any(Function));
 			expect(parser.prototype)
 				.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
 		});
 
-		test(`Parser[${type}] will match event`, async () => {
-			const result = await (new parser()).parse(event);
+		test(`Parser[${this.name}] will match event`, async () => {
+			const result = await this.makeNew().parse(event);
 			expect(result).toEqual(expect.objectContaining({
 				attachments: [expect.any(Object)],
 			}));
 			expect(result.attachments).toHaveLength(1);
 		});
 
-		test(`Parser[${type}] is selected by Lambda handler`, async () => {
-			const result = await (new parser()).parse(event);
+		test(`Parser[${this.name}] is selected by Lambda handler`, async () => {
+			const result = await this.makeNew().parse(event);
 			const h = await Handler.processEvent(event);
 			expect(h).toEqual(expect.objectContaining(result));
 		});

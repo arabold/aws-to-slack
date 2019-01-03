@@ -3,19 +3,21 @@
 const _ = require("lodash"),
 	Slack = require("./slack"),
 	GenericParser = require("./parsers/generic"),
-	parsers = [
-		require("./parsers/cloudwatch"),
-		require("./parsers/codecommit/pullrequest"),
-		require("./parsers/codecommit/repository"),
-		require("./parsers/autoscaling"),
-		require("./parsers/aws-health"),
-		require("./parsers/beanstalk"),
-		require("./parsers/codebuild"),
-		require("./parsers/codedeploy"),
-		require("./parsers/inspector"),
-		require("./parsers/rds"),
-		require("./parsers/ses-received"),
-	];
+	parsers = {};
+
+_.each([
+	"./parsers/cloudwatch",
+	"./parsers/codecommit/pullrequest",
+	"./parsers/codecommit/repository",
+	"./parsers/autoscaling",
+	"./parsers/aws-health",
+	"./parsers/beanstalk",
+	"./parsers/codebuild",
+	"./parsers/codedeploy",
+	"./parsers/inspector",
+	"./parsers/rds",
+	"./parsers/ses-received",
+], name => parsers[name] = require(name));
 
 async function processIncoming(event) {
 	if (_.isString(event)) {
@@ -29,26 +31,29 @@ async function processIncoming(event) {
 
 	// Execute all parsers and use the first successful result
 	let message;
-	for (const i in parsers) {
-		const parser = parsers[i];
+	for (const parserName in parsers) {
+		if (!parsers.hasOwnProperty(parserName)) {
+			continue;
+		}
 		try {
+			const parser = parsers[parserName];
 			message = await ((new parser()).parse(event));
 			if (message) {
 				// Truthy but empty message will stop execution
 				if (message === true || _.isEmpty(message)) {
-					console.error(`Parser stopping execution: ${parser}`);
+					console.error(`Parser stopping execution: ${parserName}`);
 					return null;
 				}
 				break;
 			}
 		}
 		catch (e) {
-			console.error(`[Error parsing event][${parser}] ${e}`);
+			console.error(`[Error parsing event][${parserName}] ${e}`);
 		}
 	}
 	if (!message) {
 		// Fallback to the generic parser if none other succeeded
-		console.log("No parser was able to parse the message.");
+		console.log("Falling back to GenericParser...");
 		message = await (new GenericParser).parse(event);
 	}
 
