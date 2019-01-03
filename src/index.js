@@ -3,21 +3,19 @@
 const _ = require("lodash"),
 	Slack = require("./slack"),
 	GenericParser = require("./parsers/generic"),
-	parsers = {};
-
-_.each([
-	"./parsers/cloudwatch",
-	"./parsers/codecommit/pullrequest",
-	"./parsers/codecommit/repository",
-	"./parsers/autoscaling",
-	"./parsers/aws-health",
-	"./parsers/beanstalk",
-	"./parsers/codebuild",
-	"./parsers/codedeploy",
-	"./parsers/inspector",
-	"./parsers/rds",
-	"./parsers/ses-received",
-], name => parsers[name] = require(name));
+	parsers = _.map([
+		"./parsers/cloudwatch",
+		"./parsers/codecommit/pullrequest",
+		"./parsers/codecommit/repository",
+		"./parsers/autoscaling",
+		"./parsers/aws-health",
+		"./parsers/beanstalk",
+		"./parsers/codebuild",
+		"./parsers/codedeploy",
+		"./parsers/inspector",
+		"./parsers/rds",
+		"./parsers/ses-received",
+	], name => [name, require(name)]);
 
 async function processIncoming(event) {
 	if (_.isString(event)) {
@@ -31,13 +29,10 @@ async function processIncoming(event) {
 
 	// Execute all parsers and use the first successful result
 	let message;
-	for (const parserName in parsers) {
-		if (!parsers.hasOwnProperty(parserName)) {
-			continue;
-		}
+	for (const i in parsers) {
+		const parserName = parsers[i][0];
 		try {
-			const parser = parsers[parserName];
-			message = await ((new parser()).parse(event));
+			message = await ((new parsers[i][1]()).parse(event));
 			if (message) {
 				// Truthy but empty message will stop execution
 				if (message === true || _.isEmpty(message)) {
