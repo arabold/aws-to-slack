@@ -13,12 +13,12 @@ Metadata:
         default: 'Default Subscriptions'
       Parameters:
       - ParentAlertStack
-      - FallbackEamil
+      - ErrorAlertEmail
 Parameters:
   ParentAlertStack:
     Type: String
     Description: 'Optional: Stack name containing SNS topic from https://github.com/widdix/aws-cf-templates/blob/master/operations/alert.yaml'
-  FallbackEmail:
+  ErrorAlertEmail:
     Description: 'Optional: email address to receive alert that function is failing. The email will only contain a count of failures -- you will need to then review CloudWatch logs to determine cause of the issue. HIGHLY RECOMMEND handling failures like this within a DeadLetterQueue via ParentAlertStack instead.'
     Type: String
     Default: ''
@@ -33,6 +33,8 @@ Parameters:
 Conditions:
   HasChannel: !Not [!Equals [!Ref Channel, '']]
   HasAlertStack: !Not [!Equals [!Ref ParentAlertStack, '']]
+  HasAlertEmail: !Not [!Equals [!Ref ErrorAlertEmail, '']]
+  NeedsAlarm: !Or [Condition: HasAlertStack, Condition: HasAlertEmail]
 
 Resources:
   Function:
@@ -78,15 +80,12 @@ Resources:
         - 'budgets.amazonaws.com' # Allow Budget Notifications
         - 'rds.amazonaws.com' # Allow RDS Events
         - 's3.amazonaws.com' # Allow S3 Event Notifications
-  SNSTrigger:
-    Condition: HasAlertStack
-    Type: 'AWS::SNS::Subscription'
-    Properties:
-      Endpoint: !GetAtt Function.Arn
-      Protocol: lambda
-      TopicArn: {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
-  AutoScalingGroupLifecycleHookQueueTooHighAlarm:
-    Condition: HasAlertStack
+
+  #
+  # CloudWatch Alarm
+  #
+  FunctionFailing:
+    Condition: NeedsAlarm
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
       AlarmDescription: 'AWS-to-Slack Lambda function is failing'
@@ -98,8 +97,23 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       Threshold: 0
       TreatMissingData: notBreaching
-      AlarmActions:
-      - !GetAtt Function.Arn
       Dimensions:
       - Name: FunctionName
         Value: !Ref Function
+      AlarmActions:
+      - !GetAtt FunctionFailingTopic.Arn
+      - !If
+        - HasAlertStack
+        - {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
+        - !Ref AWS::NoValue
+  FunctionFailingTopic:
+    Condition: NeedsAlarm
+    Type: 'AWS::SNS::Topic'
+    Properties: {}
+  FunctionFailingEmailSubscription:
+    Condition: HasAlertEmail
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: !Ref FunctionFailingTopic
+      Protocol: email
+      Endpoint: !Ref ErrorAlertEmail
