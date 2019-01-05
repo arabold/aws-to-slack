@@ -38,7 +38,7 @@ class CloudWatchParser extends SNSParser {
 		// Render chart
 		let image_url;
 		try {
-			image_url = await this.getChartUrl(message.Trigger);
+			image_url = await this.getChartUrl(message);
 		}
 		catch (err) {
 			console.log("Error rendering chart:", err);
@@ -71,22 +71,30 @@ class CloudWatchParser extends SNSParser {
 		};
 	}
 
-	async getChartUrl(trigger) {
+	async getChartUrl(message) {
+		const trigger = message.Trigger;
+		const metric = {
+			title: `${trigger.MetricName} (${trigger.Statistic}/${trigger.Period}s)`,
+			color: "af9cf4",
+			thickness: 2,
+			dashed: false,
+			query: {
+				Namespace: trigger.Namespace,
+				MetricName: trigger.MetricName,
+				Dimensions: trigger.Dimensions,
+				Statistics: [trigger.Statistic],
+				Unit: trigger.Unit,
+			},
+		};
+		// try to save a little time and skip describing the alarm
+		const thresh = /the threshold \(([\d.-]+)\)/.exec(message.NewStateReason);
+		if (thresh) {
+			metric.threshold = parseFloat(thresh[1]);
+		}
+
 		await Chart.configureAwsSdk();
 		const chart = new Chart({
-			metrics: [{
-				title: `${trigger.MetricName} (${trigger.Statistic}/${trigger.Period}s)`,
-				color: "af9cf4",
-				thickness: 2,
-				dashed: false,
-				query: {
-					Namespace: trigger.Namespace,
-					MetricName: trigger.MetricName,
-					Dimensions: trigger.Dimensions,
-					Statistics: [trigger.Statistic],
-					Unit: trigger.Unit,
-				},
-			}],
+			metrics: [metric],
 			timeOffset: 1440,  // Get statistic for last 1440 minutes
 			timePeriod: 60,    // Get statistic for each 60 seconds
 			chartSamples: 144, // Data points extrapolated on chart

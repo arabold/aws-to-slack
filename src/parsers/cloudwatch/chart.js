@@ -412,6 +412,7 @@ class AwsCloudWatchChartMetric {
 		this.thickness = 1;
 		this.dashed = false;
 		this.datapoints = null;
+		this.threshold = null;
 
 		this.query = {
 			Namespace: "AWS/EC2",
@@ -443,6 +444,9 @@ class AwsCloudWatchChartMetric {
 	}
 
 	async getThreshold() {
+		if (this.threshold !== null) {
+			return this.threshold;
+		}
 		const def = await this.chart.describeAlarm(this.query);
 		this.threshold = def.Threshold;
 		return this.threshold;

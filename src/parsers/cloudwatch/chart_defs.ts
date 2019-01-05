@@ -20,4 +20,5 @@ export interface ChartMetricConfig {
 	thickness?: number;
 	dashed?: boolean|string;
 	query: CloudWatch.Types.GetMetricStatisticsInput;
+	threshold?: number;
 }
