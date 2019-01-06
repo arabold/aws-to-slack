@@ -46,8 +46,8 @@
 					// Any property other that listed above will be added to Dimensions array. It's different for different metrics namespaces
 					// InstanceId. This parameter is for Dimensions array. Different for different metrics namespaces
 					// http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html
-					"InstanceId": "i-2d55aad0",
-
+					"Name": "InstanceId",
+					"Value": "i-2d55aad0",
 					}],
 				},
 			}

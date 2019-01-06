@@ -53,6 +53,14 @@ class SNSParser {
 		return false;
 	}
 
+	getRegion(record) {
+		const snsArn = _.split(record.EventSubscriptionArn, ":");
+		if (snsArn.length >= 6) {
+			return snsArn[3];
+		}
+		return "us-east-1";
+	}
+
 	static decorateWithSource(record, slackMessage) {
 		const att = _.get(slackMessage, "attachments[0]");
 

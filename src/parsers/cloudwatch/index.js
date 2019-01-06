@@ -7,7 +7,7 @@ const _ = require("lodash"),
 
 class CloudWatchParser extends SNSParser {
 
-	async handleMessage(message) {
+	async handleMessage(message, record) {
 		if (!_.has(message, "AlarmName") || !_.has(message, "AlarmDescription")) {
 			return false;// not relevant
 		}
@@ -19,8 +19,9 @@ class CloudWatchParser extends SNSParser {
 		const oldState = message.OldStateValue;
 		const newState = message.NewStateValue;
 		const reason = message.NewStateReason;
-		const region = message.Region;
+		const regionName = message.Region;
 		const time = message.StateChangeTime;
+		const region = this.getRegion(record);
 
 		let color = Slack.COLORS.neutral;
 		switch (newState) {
@@ -62,7 +63,7 @@ class CloudWatchParser extends SNSParser {
 					short: true
 				}, {
 					title: "Region",
-					value: region,
+					value: regionName,
 					short: true
 				}],
 				ts: Slack.toEpochTime(new Date(time)),
@@ -81,8 +82,8 @@ class CloudWatchParser extends SNSParser {
 			query: {
 				Namespace: trigger.Namespace,
 				MetricName: trigger.MetricName,
-				Dimensions: trigger.Dimensions,
-				Statistics: [trigger.Statistic],
+				Dimensions: _.map(trigger.Dimensions, d => ({ Name: d.name, Value: d.value })),
+				Statistics: [_.upperFirst(_.toLower(trigger.Statistic))],
 				Unit: trigger.Unit,
 			},
 		};
