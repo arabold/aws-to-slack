@@ -370,7 +370,7 @@ class AwsCloudWatchChart {
 		// @see https://developers.google.com/chart/image/docs/chart_params
 		const params = [
 			"cht=ls", // chart type
-			"chma=25,15,10,10|0,20", // padding (data only, not axis)
+			"chma=20,15,5,5|0,20", // padding (data only, not axis)
 			"chxt=x,y", // axis to show
 			"chxl=0:|" + _.join(labels, "|"),
 			"chco=" + _.join(colors, ","), // line colors
