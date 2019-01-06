@@ -86,18 +86,37 @@ Resources:
         - Effect: Allow
           Action: [ 'kms:Decrypt' ]
           Resource: !Ref KmsDecryptKeyArn
-  LambdaInvokePermission:
+  LambdaInvokeBySns:
     Type: 'AWS::Lambda::Permission'
     Properties:
       FunctionName: !Ref Function
       Action: 'lambda:InvokeFunction'
-      Principal:
-        Service:
-        - 'sns.amazonaws.com' # Allow SNS Notifications
-        - 'events.amazonaws.com' # Allow CloudWatch Events
-        - 'budgets.amazonaws.com' # Allow Budget Notifications
-        - 'rds.amazonaws.com' # Allow RDS Events
-        - 's3.amazonaws.com' # Allow S3 Event Notifications
+      Principal: 'sns.amazonaws.com' # Allow SNS Notifications
+  LambdaInvokeByEvents:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com' # Allow CloudWatch Events
+  LambdaInvokeByRds:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 'rds.amazonaws.com' # Allow RDS Events
+  LambdaInvokeByS3:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 's3.amazonaws.com' # Allow S3 Event Notifications
+  TriggerFromAlertStack:
+    Condition: HasAlertStack
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
+      Protocol: lambda
+      Endpoint: !GetAtt Function.Arn
 
   #
   # CloudWatch Alarm
@@ -119,11 +138,7 @@ Resources:
       - Name: FunctionName
         Value: !Ref Function
       AlarmActions:
-      - !GetAtt FunctionFailingTopic.Arn
-      - !If
-        - HasAlertStack
-        - {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
-        - !Ref AWS::NoValue
+      - !Ref FunctionFailingTopic
   FunctionFailingTopic:
     Condition: NeedsAlarm
     Type: 'AWS::SNS::Topic'
