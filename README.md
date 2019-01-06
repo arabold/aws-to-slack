@@ -28,6 +28,7 @@ Supported notification formats:
 * Amazon SES Received Notifications
 * CloudWatch Alarms (incl. Metrics)
 * Elastic Beanstalk
+* Auto Scaling Events
 * RDS
 * Generic SNS messages
 * Plain text messages
