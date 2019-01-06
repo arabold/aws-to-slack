@@ -35,7 +35,7 @@ class AutoScalingParser extends SNSParser {
 
 		return {
 			attachments: [{
-				author_name: `AWS AutoScaling (${accountId})`,
+				author_name: `AWS AutoScaling (${region} - ${accountId})`,
 				author_link: signInLink,
 				title: `${groupName} - ${eventName}`,
 				title_link: consoleLink,
