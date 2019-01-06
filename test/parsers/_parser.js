@@ -1,4 +1,4 @@
-/* global expect */
+/* global expect, test */
 /* eslint lodash/prefer-lodash-typecheck:0 */
 
 const Handler = require("../../src/index");
@@ -36,15 +36,19 @@ class ParserMock {
 		}
 		event = {
 			Records: [{
-				"EventVersion": "1.0",
-				"EventSubscriptionArn": "arn:aws:sns:region:9999999991:topicname:subscriptionid",
 				"EventSource": "aws:sns",
+				"EventVersion": "1.0",
+				"EventSubscriptionArn": "arn:aws:sns:region:9999999991:ExampleTopic:ExampleSubscriptionId",
 				"Sns": {
+					"Type": "Notification",
+					"TopicArn": "arn:aws:sns:region:9999999991:ExampleTopic",
 					"SignatureVersion": "1",
 					"Timestamp": `1970-0${rand(1)}-2${rand(1)}T0${rand(1)}:0${rand(1)}:0${rand(1)}.${rand(3)}Z`,
-					"Signature": "EXAMPLE",
-					"SigningCertUrl": "EXAMPLE",
-					"MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+					"Signature": "http://example.com/signature",
+					"SigningCertUrl": "http://example.com/signingcerturl",
+					"UnsubscribeUrl": "http://example.com/unsubscribeurl",
+					"Subject": "TestInvoke",
+					"MessageId": `95df01b4-ee${rand(2)}-5cb9-9903-4c221d41${rand(4)}`,
 					"Message": event,
 					"MessageAttributes": {
 						"Test": {
@@ -56,11 +60,7 @@ class ParserMock {
 							"Value": "TestBinary"
 						}
 					},
-					"Type": "Notification",
-					"UnsubscribeUrl": "EXAMPLE",
-					"TopicArn": "arn:aws:sns:region:9999999991:topicname",
-					"Subject": "TestInvoke"
-				}
+				},
 			}]
 		};
 
@@ -76,17 +76,17 @@ class ParserMock {
 		});
 
 		test(`Parser[${this.name}] will match event`, async () => {
-			const result = await this.makeNew().parse(event);
-			expect(result).toEqual(expect.objectContaining({
+			const msg = await this.makeNew().parse(event);
+			expect(msg).toEqual(expect.objectContaining({
 				attachments: [expect.any(Object)],
 			}));
-			expect(result.attachments).toHaveLength(1);
+			expect(msg.attachments).toHaveLength(1);
 		});
 
 		test(`Parser[${this.name}] is selected by Lambda handler`, async () => {
-			const result = await this.makeNew().parse(event);
+			const msg = await this.makeNew().parse(event);
 			const h = await Handler.processEvent(event);
-			expect(h).toEqual(expect.objectContaining(result));
+			expect(h).toEqual(expect.objectContaining(msg));
 		});
 	}
 }
