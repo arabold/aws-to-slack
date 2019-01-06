@@ -45,17 +45,13 @@ class CloudWatchParser extends SNSParser {
 			console.log("Error rendering chart:", err);
 		}
 
-		const signInLink = `https://${accountId}.signin.aws.amazon.com/console/cloudwatch?region=${region}#alarm:name=${alarmName}`;
-		const consoleLink = `https://console.aws.amazon.com/cloudwatch/home?region=${region}#alarm:name=${alarmName}`;
-
 		return {
 			attachments: [{
 				fallback: `${alarmName} state is now ${newState}:\n${reason}`,
 				color: color,
 				author_name: `AWS CloudWatch Alarm (${accountId})`,
-				author_link: signInLink,
 				title: alarmName,
-				title_link: consoleLink,
+				title_link: `https://console.aws.amazon.com/cloudwatch/home?region=${region}#alarm:name=${alarmName}`,
 				text: reason,
 				fields: [{
 					title: "State Change",
