@@ -21,7 +21,9 @@ Supported notification formats:
 * AWS Code Build
 * AWS CodeCommit
 * AWS CodeDeploy 🆕
+* AWS CodePipeline 🆕
 * AWS Health Dashboard
+* Amazon GuardDury 🆕
 * Amazon Inspector
 * Amazon SES Received Notifications
 * CloudWatch Alarms (incl. Metrics)
