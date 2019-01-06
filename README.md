@@ -23,7 +23,7 @@ Supported notification formats:
 * AWS CodeDeploy 🆕
 * AWS CodePipeline 🆕
 * AWS Health Dashboard
-* Amazon GuardDury 🆕
+* Amazon GuardDuty 🆕
 * Amazon Inspector
 * Amazon SES Received Notifications
 * CloudWatch Alarms (incl. Metrics)
