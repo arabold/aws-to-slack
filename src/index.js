@@ -13,12 +13,14 @@ function processIncoming(event) {
 		require("./parsers/aws-health"),
 		require("./parsers/inspector"),
 		require("./parsers/codebuild"),
-		require("./parsers/codedeploy"),
+		require("./parsers/codedeployCloudWatch"),
+		require("./parsers/codedeploySns"),
 		require("./parsers/codepipeline"),
 		require("./parsers/codepipeline-approval"),
 		require("./parsers/ses-received"),
 		require("./parsers/codecommit/pullrequest"),
 		require("./parsers/codecommit/repository"),
+		require("./parsers/guardduty"),
 	];
 
 	// Execute all parsers and use the first successful result
