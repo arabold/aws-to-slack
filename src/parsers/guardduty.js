@@ -4,7 +4,7 @@ const BbPromise = require("bluebird"),
 	_ = require("lodash"),
 	Slack = require("../slack");
 
-class CodeBuildParser {
+class GuardDutyParser {
 
 	parse(event) {
 		return BbPromise.try(() => _.isObject(event) ? event : JSON.parse(event))
@@ -14,13 +14,13 @@ class CodeBuildParser {
 				return BbPromise.resolve(false);
 			}
 
-			const title = _.get(event, "title")
-			const description = _.get(event, "description")
+			const title = _.get(event, "title");
+			const description = _.get(event, "description");
 			const createdAt = new Date(_.get(event, "time"));
-			const severity = _.get(event, "severity")
+			const severity = _.get(event, "severity");
 
-			const threatName = _.get(event, "service.additionalInfo.threatName")
-			const threatListName = _.get(event, "service.additionalInfo.threatListName")
+			const threatName = _.get(event, "service.additionalInfo.threatName");
+			const threatListName = _.get(event, "service.additionalInfo.threatListName");
 			const fields = [];
 
 
@@ -42,18 +42,18 @@ class CodeBuildParser {
 				short: true
 			});
 
-			const actionType = _.get(event, "service.action.actionType")
+			const actionType = _.get(event, "service.action.actionType");
 
 			if (actionType == "PORT_PROBE") {
 
-				const port = _.get(event, "service.action.portProbeAction.portProbeDetails[0].localPortDetails.port")
-				const portName = _.get(event, "service.action.portProbeAction.portProbeDetails[0].localPortDetails.portName")
+				const port = _.get(event, "service.action.portProbeAction.portProbeDetails[0].localPortDetails.port");
+				const portName = _.get(event, "service.action.portProbeAction.portProbeDetails[0].localPortDetails.portName");
 
-				const ipAddressV4 = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.ipAddressV4")
-				const isp = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.organization.isp")
-				const org = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.organization.org")
+				const ipAddressV4 = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.ipAddressV4");
+				const isp = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.organization.isp");
+				const org = _.get(event, "service.action.portProbeAction.portProbeDetails[0].remoteIpDetails.organization.org");
 
-				const blocked = _.get(event, "service.action.portProbeAction.blocked")
+				const blocked = _.get(event, "service.action.portProbeAction.blocked");
 
 				fields.push({
 					title: "Port probe details",
@@ -74,7 +74,7 @@ class CodeBuildParser {
 				});
 			}
 			else {
-				console.log(`Unknown guard duty actionType '${actionType}'`)
+				console.log(`Unknown GuardDuty actionType '${actionType}'`);
 
 				fields.push({
 					title: "Unknown Action Type",
@@ -83,20 +83,20 @@ class CodeBuildParser {
 				});
 			}
 
-			const resourceType = _.get(event, "resource.resourceType")
+			const resourceType = _.get(event, "resource.resourceType");
 
-				fields.push({
-					title: "Resource Type",
-					value: resourceType,
-					short: true
-				});
+			fields.push({
+				title: "Resource Type",
+				value: resourceType,
+				short: true
+			});
 
 			if (resourceType == "Instance") {
 
-				const instanceDetails = _.get(event, "resource.instanceDetails")
+				const instanceDetails = _.get(event, "resource.instanceDetails");
 
-				const instanceId = _.get(instanceDetails, "instanceId")
-				const instanceType = _.get(instanceDetails, "instanceType")
+				const instanceId = _.get(instanceDetails, "instanceId");
+				const instanceType = _.get(instanceDetails, "instanceType");
 
 				fields.push({
 					title: "Instance ID",
@@ -110,11 +110,11 @@ class CodeBuildParser {
 					short: true
 				});
 
-				const tags = _.get(instanceDetails, "tags")
+				const tags = _.get(instanceDetails, "tags");
 
-				for (var i = 0; i < tags.length; i++) {
-					var key = tags[i].key
-					var value = tags[i].value
+				for (let i = 0; i < tags.length; i++) {
+					const key = tags[i].key;
+					const value = tags[i].value;
 
 					fields.push({
 						title: key,
@@ -125,7 +125,7 @@ class CodeBuildParser {
 
 			}
 			else {
-				console.log(`Unknown guard duty resourceType '${resourceType}'`)
+				console.log(`Unknown GuardDuty resourceType '${resourceType}'`);
 
 				fields.push({
 					title: "Unknown Resource Type ("+resourceType+")",
@@ -134,7 +134,7 @@ class CodeBuildParser {
 				});
 			}
 
-			let color = Slack.COLORS.neutral;
+			const color = Slack.COLORS.neutral;
 
 			const slackMessage = {
 				attachments: [{
@@ -152,4 +152,4 @@ class CodeBuildParser {
 	}
 }
 
-module.exports = CodeBuildParser;
+module.exports = GuardDutyParser;
