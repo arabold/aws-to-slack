@@ -1,3 +1,4 @@
+/* eslint lodash/prefer-lodash-method:0 */
 "use strict";
 
 const _ = require("lodash"),
@@ -18,16 +19,58 @@ class GenericParser extends SNSParser {
 			// do nothing
 		}
 
+		// Clone object so we can delete known keys
+		const fallback = JSON.stringify(event, null, 2);
+		event = _.clone(event);
+
+		let title = "Raw Event",
+			author_name = "<unknown>",
+			ts = new Date();
+
+		if (event.source) {
+			let t = [];
+			if (event.region) {
+				t.push(event.region);
+				delete event.region;
+			}
+			if (event.account) {
+				t.push(event.account);
+				delete event.account;
+			}
+			t = t.length ? ` (${t.join(" - ")})` : "";
+			author_name = `${event.source}${t}`;
+			delete event.source;
+		}
+
+		if (event["detail-type"]) {
+			title = event["detail-type"];
+			delete event["detail-type"];
+		}
+
+		if (event.time) {
+			try {
+				ts = new Date(event.time);
+				delete event.time;
+			}
+			catch (err) {
+				// do nothing
+			}
+		}
+
 		// Serialize the whole event data
 		const fields = this.objectToFields(event);
-		const text = fields ? undefined : JSON.stringify(event, null, 2);
+		const text = fields ? undefined
+			: JSON.stringify(event, null, 2)
+				.replace(/^{\n/, "")
+				.replace(/\n}\n?$/, "");
 
 		return {
 			attachments: [{
 				color: Slack.COLORS.neutral,
-				ts: Slack.toEpochTime(new Date()),
-				title: "Raw Event",
-				fallback: text,
+				ts: Slack.toEpochTime(ts),
+				fallback,
+				author_name,
+				title,
 				text,
 				fields,
 			}]
@@ -67,7 +110,7 @@ class GenericParser extends SNSParser {
 				fields.push({
 					title: key,
 					value: val,
-					short: val.length < 20,
+					short: val.length < 40,
 				});
 			}
 		}
