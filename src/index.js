@@ -15,6 +15,8 @@ function processIncoming(event) {
 		require("./parsers/codebuild"),
 		require("./parsers/codedeployCloudWatch"),
 		require("./parsers/codedeploySns"),
+		require("./parsers/codepipeline"),
+		require("./parsers/codepipeline-approval"),
 		require("./parsers/ses-received"),
 		require("./parsers/codecommit/pullrequest"),
 		require("./parsers/codecommit/repository"),
