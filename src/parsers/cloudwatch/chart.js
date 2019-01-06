@@ -275,25 +275,25 @@ class AwsCloudWatchChart {
 	 */
 	getTimeSlots() {
 		let toTime = 0;
-		let fromTime = new Date();
+		let fromTime = +new Date();
 		_.each(this.metrics, m => {
-			const dates = _.map(m.statistics, s => new Date(s.Timestamp));
-			toTime = _.max([ _.max(dates), toTime]);
-			fromTime = _.min([ _.min(dates), fromTime]);
+			const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
+			toTime = Math.max(_.max(dates), toTime);
+			fromTime = Math.min(_.min(dates), fromTime);
 		});
 		if (!fromTime || !toTime) {
 			throw "Cannot render a chart without timeframe";
 		}
 
 		const timeSlots = [];
-		for (let i = +fromTime; i <= toTime; i += ((toTime - fromTime) / this.chartSamples)) {
-			const to = new Date(i);
+		for (let i = fromTime; i <= toTime;) {
+			const from = i;
+			i += ((toTime - fromTime) / this.chartSamples);
+			const to = i;
+			const d = new Date(to);
 			timeSlots.push({
-				text: ("0" + to.getUTCHours()).slice(-2)
-				+ ":"
-				+ ("0" + to.getUTCMinutes()).slice(-2),
-				from: new Date(i),
-				to: to
+				text: ("0" + d.getUTCHours()).slice(-2) + ":" + ("0" + d.getUTCMinutes()).slice(-2),
+				from, to,
 			});
 		}
 
@@ -331,20 +331,21 @@ class AwsCloudWatchChart {
 				// get relevant numbers only
 				const points = _.map(_.filter(m.datapoints, stat => {
 					// limit to points that appear within this time slice
-					const d = new Date(stat.Timestamp);
+					const d = +new Date(stat.Timestamp);
 					return d > timeSlot.from && d <= timeSlot.to;
 				}), stat => stat[statName]);
 
 				switch (statName) {
-				case "MAXIMUM": return _.max(points);
-				case "MINIMUM": return _.min(points);
-				case "AVERAGE": return _.sum(points) / (points.length || 1);
-				case "SUM": return _.sum(points);
+				case "Maximum": return _.max(points);
+				case "Minimum": return _.min(points);
+				case "Average": return _.sum(points) / (points.length || 1);
+				case "Sum": return _.sum(points);
+				default: return null;
 				}
 			}));
 
-		const absMaxValue = _.reduce(datasets, (n, d) => _.max([n, _.max(d)]));
-		const topEdge = Math.ceil(absMaxValue*1.1);
+		const absMaxValue = _.reduce(datasets, (n, d) => Math.max(n, _.max(d)), 0);
+		const topEdge = Math.ceil(absMaxValue*1.05);
 
 		const points = _.map(datasets, d => this.extendedEncodeArr(d, topEdge));
 		const colors = _.map(this.metrics, m => m.color);
@@ -353,11 +354,11 @@ class AwsCloudWatchChart {
 
 		// Add threshold markers
 		_.each(this.metrics, m => {
-			if (m.threshold <= absMaxValue ) {
+			if (m.threshold <= topEdge) {
 				// fill data array with static value
 				const pointArray = _.fill(
 					new Array(timeSlots.length),
-					m.threshold, topEdge
+					m.threshold
 				);
 				points.push(this.extendedEncodeArr(pointArray, topEdge));
 				colors.push("FF0000");
