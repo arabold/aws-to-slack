@@ -2,24 +2,28 @@
 
 const _ = require("lodash"),
 	Slack = require("./slack"),
-	GenericParser = require("./parsers/generic"),
 	parsers = _.map([
-		"./parsers/cloudwatch",
-		"./parsers/codecommit/pullrequest",
-		"./parsers/codecommit/repository",
-		"./parsers/autoscaling",
-		"./parsers/aws-health",
-		"./parsers/beanstalk",
-		"./parsers/codebuild",
-		"./parsers/codedeployCloudWatch",
-		"./parsers/codedeploySns",
-		"./parsers/codepipeline",
-		"./parsers/codepipeline-approval",
-		"./parsers/guardduty",
-		"./parsers/inspector",
-		"./parsers/rds",
-		"./parsers/ses-received",
-	], name => [name, require(name)]);
+		// Ordered list of parsers:
+		"cloudwatch",
+		"codecommit/pullrequest",
+		"codecommit/repository",
+		"autoscaling",
+		"aws-health",
+		"beanstalk",
+		"codebuild",
+		"codedeployCloudWatch",
+		"codedeploySns",
+		"codepipeline",
+		"codepipeline-approval",
+		"guardduty",
+		"inspector",
+		"rds",
+		"ses-received",
+		// Last attempt to parse, will match any:
+		"generic",
+	], name => [name, require(`./parsers/${name}`)]);
+
+let lastSelectedHandler;
 
 async function processIncoming(event) {
 	if (_.isString(event)) {
@@ -32,31 +36,26 @@ async function processIncoming(event) {
 	}
 
 	// Execute all parsers and use the first successful result
-	let message;
 	for (const i in parsers) {
 		const parserName = parsers[i][0];
 		try {
-			message = await ((new parsers[i][1]()).parse(event));
+			const message = await ((new parsers[i][1]()).parse(event));
 			if (message) {
+				lastSelectedHandler = parserName;
+
 				// Truthy but empty message will stop execution
 				if (message === true || _.isEmpty(message)) {
 					console.error(`Parser stopping execution: ${parserName}`);
-					return null;
+					return null;// never send empty message
 				}
-				break;
+
+				return message;
 			}
 		}
 		catch (e) {
-			console.error(`[Error parsing event][${parserName}] ${e}`);
+			console.error(`Error parsing event [parser:${parserName}]:`, e);
 		}
 	}
-	if (!message) {
-		// Fallback to the generic parser if none other succeeded
-		console.log("Falling back to GenericParser...");
-		message = await (new GenericParser).parse(event);
-	}
-
-	return message;
 }
 
 module.exports.processEvent = processIncoming;
@@ -67,8 +66,13 @@ module.exports.handler = async (event, context, callback) => {
 
 	try {
 		const message = await processIncoming(event);
-		console.log("Sending Message to Slack:", JSON.stringify(message, null, 2));
-		await Slack.postMessage(message);
+		if (message) {
+			console.log(`Sending Slack message from Parser[${lastSelectedHandler}]:`, JSON.stringify(message, null, 2));
+			await Slack.postMessage(message);
+		}
+		else {
+			console.log("No parser matched event");
+		}
 		callback();
 	}
 	catch (e) {
