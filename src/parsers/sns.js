@@ -51,11 +51,21 @@ class SNSParser {
 	}
 
 	getRegion(record) {
+		// Example: arn:aws:sns:region:account-id:topicname:subscriptionid
 		const snsArn = _.split(record.EventSubscriptionArn, ":");
 		if (snsArn.length >= 6) {
 			return snsArn[3];
 		}
 		return "us-east-1";
+	}
+
+	getAccoundId(record) {
+		// Example: arn:aws:sns:region:account-id:topicname:subscriptionid
+		const snsArn = _.split(record.EventSubscriptionArn, ":");
+		if (snsArn.length >= 6) {
+			return snsArn[4];
+		}
+		return "";
 	}
 
 	static decorateWithSource(record, slackMessage) {
