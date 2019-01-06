@@ -62,7 +62,8 @@ test(`generic-parser will match simple event`, async () => {
 	expect(result.attachments[0]).toEqual(expect.objectContaining({
 		"ts": expect.any(Number),
 		"color": "#A8A8A8",
-		"fallback": undefined,
+		"author_name": "<unknown>",
+		"fallback": JSON.stringify(event, null, 2),
 		"text": undefined,
 		"title": "Raw Event",
 		"fields": [
