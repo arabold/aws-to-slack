@@ -17,11 +17,11 @@
     "url": "https://github.com/arabold/aws-to-slack.git"
   },
   "dependencies": {
-    "aws-sdk": "^2.382.0",
+    "aws-sdk": "^2.384.0",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "eslint": "^5.11.1",
+    "eslint": "^5.12.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-promise": "^4.0.1",
