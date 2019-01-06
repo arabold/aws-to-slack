@@ -2,12 +2,48 @@
 
 const url = require("url")
 	, https = require("https")
+	, AWS = require("aws-sdk")
 	, _ = require("lodash");
 
 /** The Slack hook URL */
-const hookUrl = process.env.SLACK_HOOK_URL;
+const hookUrlPromise = shouldDecryptBlob(process.env.SLACK_HOOK_URL, s =>
+	// URL should be 78-80 characters long when decrypted
+	s.length > 100 && !/https?:\/\/\w/.test(s));
+
 /** The Slack channel to send a message to stored in the slackChannel environment variable */
-const slackChannel = process.env.SLACK_CHANNEL;
+const slackChannelPromise = shouldDecryptBlob(process.env.SLACK_CHANNEL);
+
+/**
+ * Decrypt environment variable if it looks like a KMS encrypted string.
+ *
+ * @param {string} blob Raw or encrypted base64 value
+ * @param {Function} [isValid] Checks whether to attempt to decrypt the value
+ * @returns {Promise<string>} Resolved decrypted value, or raw value if fails
+ */
+function shouldDecryptBlob(blob, isValid) {
+	return new Promise(resolve => {
+		if (_.isString(blob)
+			// encrypted values are usually 250+ characters
+			&& blob.length > 50 && !_.includes(blob, " ")
+			&& (!isValid || isValid(blob))
+		) {
+			const kmsClient = new AWS.KMS();
+			kmsClient.decrypt({ CiphertextBlob: blob }, (err, data) => {
+				if (err) {
+					console.error("Error decrypting (using as-is):", err);
+					resolve(blob);
+				}
+				else {
+					resolve(data.Plaintext);
+				}
+			});
+		}
+		else {
+			// use as-is
+			resolve(blob);
+		}
+	});
+}
 
 /**
  * Slack Helper Utility
@@ -30,11 +66,13 @@ class Slack {
 	 * @returns {Promise} Fulfills on success, rejects on error.
 	 */
 	static postMessage(message) {
-		if (_.isEmpty(message.channel) && !_.isEmpty(slackChannel)) {
-			message.channel = slackChannel;
-		}
-
 		return retry(3, async () => {
+			const hookUrl = await hookUrlPromise;
+			const slackChannel = await slackChannelPromise;
+			if (_.isEmpty(message.channel) && !_.isEmpty(slackChannel)) {
+				message.channel = slackChannel;
+			}
+
 			const response = await postJson(message, hookUrl);
 			const statusCode = response.statusCode;
 

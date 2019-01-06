@@ -9,6 +9,7 @@ Metadata:
       Parameters:
       - HookUrl
       - Channel
+      - KmsDecryptKeyArn
     - Label:
         default: 'Default Subscriptions'
       Parameters:
@@ -29,9 +30,14 @@ Parameters:
     Type: String
     Description: 'Optional: Channel name to post within'
     Default: ''
+  KmsDecryptKeyArn:
+    Type: String
+    Description: 'Optional: Key used to encrypt Hook or Channel values. If provided will create IAM policy to grant access to decrypt the values.'
+    Default: ''
 
 Conditions:
   HasChannel: !Not [!Equals [!Ref Channel, '']]
+  HasKmsKey: !Not [!Equals [!Ref KmsDecryptKeyArn, '']]
   HasAlertStack: !Not [!Equals [!Ref ParentAlertStack, '']]
   HasAlertEmail: !Not [!Equals [!Ref ErrorAlertEmail, '']]
   NeedsAlarm: !Or [Condition: HasAlertStack, Condition: HasAlertEmail]
@@ -68,6 +74,18 @@ Resources:
           Effect: Allow
           Principal:
             Service: [ 'lambda.amazonaws.com' ]
+  KmsDecryptPolicy:
+    Condition: HasKmsKey
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      Roles: [ !Ref FunctionRole ]
+      PolicyName: AllowDecryptKms
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: [ 'kms:Decrypt' ]
+          Resource: !Ref KmsDecryptKeyArn
   LambdaInvokePermission:
     Type: 'AWS::Lambda::Permission'
     Properties:
