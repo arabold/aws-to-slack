@@ -7,10 +7,8 @@ const BbPromise = require("bluebird"),
 class CodePipelineParser {
 
 	parse(event) {
-		//console.log("CodePipeline :: start...");
-		//console.log(_.get(event, "Records[0].Sns.Message", "{}"));
 		return BbPromise.try(() => 
-		JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
+			JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
 		.catch(_.noop) // ignore JSON errors
 		.then(message => {
 
@@ -18,8 +16,6 @@ class CodePipelineParser {
 			if (!_.has(message, "source") || message.source != "aws.codepipeline") {
 				return BbPromise.resolve(false);
 			}
-
-			const source = message.source;
 
 			// Check that this is NOT an approval message (there is a separate handler for those...)
 			// NOTE: CodePipeline Action Execution State Changes that are APPROVALs are handled here, 
@@ -37,7 +33,7 @@ class CodePipelineParser {
 			const time = new Date(message.time);
 			
 			// Compose the title based upon the best "one line" summary of the state
-			var slackTitle = pipeline + " >> ";
+			let slackTitle = pipeline + " >> ";
 			if(typeProvider == "Manual" && typeCategory == "Approval") {
 				slackTitle += "APPROVAL REQUIRED for " + stage;
 			}
