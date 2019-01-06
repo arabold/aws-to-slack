@@ -26,7 +26,9 @@ class SNSParser {
 
 			const keys = _.keys(slackMessage);
 			if (keys.length === 1 && keys[0] === "attachments") {
-				_.each(slackMessage.attachments, a => attachments.push(a));
+				for (const i in slackMessage.attachments) {
+					attachments.push(slackMessage.attachments[i]);
+				}
 			}
 			else {
 				// send solo
