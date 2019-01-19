@@ -6,7 +6,7 @@ const _ = require("lodash"),
 
 class CodePipelineParser extends SNSParser {
 
-	handleMessage(message) {
+	handleMessage(message, record) {
 		// Check that this is a CodePipeline message
 		if (!_.has(message, "source") || message.source !== "aws.codepipeline") {
 			return false;
@@ -33,6 +33,10 @@ class CodePipelineParser extends SNSParser {
 			title += "APPROVAL REQUIRED for " + stage;
 		}
 
+		const accountId = this.getAccoundId(record);
+		const region = this.getRegion(record);
+		const title_link = `https://console.aws.amazon.com/codepipeline/home?region=${region}#/view/${pipeline}`;
+
 		let color = Slack.COLORS.neutral;
 		switch (state) {
 		//case "RESUMED":
@@ -56,9 +60,9 @@ class CodePipelineParser extends SNSParser {
 		return {
 			attachments: [{
 				fallback: `${pipeline} >> ${stage} is ${state}`,
-				author_name: "AWS CodePipeline",
+				author_name: `AWS CodePipeline (${accountId})`,
 				mrkdwn_in: [ "text" ],
-				color, ts, title, text,
+				color, ts, title, title_link, text,
 				fields: [{
 					title: "Stage",
 					value: stage,
