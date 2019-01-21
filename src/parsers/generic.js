@@ -77,9 +77,9 @@ class GenericParser extends SNSParser {
 		};
 	}
 
-	handleMessage(message, record) {
-		const title = _.get(record, "Sns.Subject");
-		const time = new Date(_.get(record, "Sns.Timestamp"));
+	handleMessage(message) {
+		const title = this.getSubject();
+		const time = new Date(this.getTimestamp());
 		const fields = this.objectToFields(message);
 		const fallback = JSON.stringify(message);
 		const text = fields ? undefined : fallback;

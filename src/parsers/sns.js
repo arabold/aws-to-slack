@@ -62,7 +62,7 @@ class SNSParser {
 		}
 
 		// Delegate processing to sub-class
-		const slackMessage = await this.handleMessage(message, event);
+		const slackMessage = await this.handleMessage(message);
 		if (!slackMessage) {
 			return;// skip message
 		}
@@ -149,8 +149,14 @@ class SNSParser {
 		}
 	}
 
-	handleMessage(message, record) {
-		throw `${message} - ${record}: Implement in sub-class`;
+	/**
+	 * Override in sub-class.
+	 *
+	 * @param {{}} message Parsed string from Sns.Message
+	 * @returns {{}|boolean} False if cannot handle message, object if can produce Slack message
+	 */
+	handleMessage(message) {
+		throw `${message} - Implement in sub-class`;
 	}
 }
 

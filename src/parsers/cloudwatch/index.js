@@ -7,7 +7,7 @@ const _ = require("lodash"),
 
 class CloudWatchParser extends SNSParser {
 
-	async handleMessage(message, record) {
+	async handleMessage(message) {
 		if (!_.has(message, "AlarmName") || !_.has(message, "AlarmDescription")) {
 			return false;// not relevant
 		}
@@ -21,7 +21,7 @@ class CloudWatchParser extends SNSParser {
 		const reason = message.NewStateReason;
 		const regionName = message.Region;
 		const time = message.StateChangeTime;
-		const region = this.getRegion(record);
+		const region = this.getRegion();
 
 		let color = Slack.COLORS.neutral;
 		switch (newState) {

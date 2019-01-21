@@ -6,7 +6,7 @@ const _ = require("lodash"),
 
 class CodePipelineApprovalParser extends SNSParser {
 
-	handleMessage(message, record) {
+	handleMessage(message) {
 		// Check that this is a CodePipeline APPROVAL message
 		if (!_.has(message, "approval.pipelineName") || !_.has(message, "consoleLink")) {
 			return false;
@@ -21,9 +21,9 @@ class CodePipelineApprovalParser extends SNSParser {
 		const reviewLink = approval.externalEntityLink;
 		const approveLink = approval.approvalReviewLink;
 		const customMsg = approval.customData;
-		const time = new Date(_.get(record, "Sns.Timestamp"));
+		const time = new Date(this.getTimestamp());
 		const numHours = Math.floor((expires - time) / 60 / 60);
-		const accountId = this.getAccoundId(record);
+		const accountId = this.getAccountId();
 
 		let hrs;
 		if (numHours < 0.001) {

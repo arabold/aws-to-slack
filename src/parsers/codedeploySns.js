@@ -6,12 +6,12 @@ const _ = require("lodash"),
 
 class CodeDeploySNSParser extends SNSParser {
 
-	handleMessage(message, record) {
+	handleMessage(message) {
 		if (!_.has(message, "deploymentId") || !_.has(message, "deploymentGroupName")) {
 			return false;
 		}
 
-		const time = new Date(_.get(record, "Sns.Timestamp"));
+		const time = new Date(this.getTimestamp());
 		const deployStatus = _.get(message, "status");
 		const deploymentGroup = _.get(message, "deploymentGroupName");
 		const deploymentId = _.get(message, "deploymentId");
