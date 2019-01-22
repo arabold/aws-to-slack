@@ -33,19 +33,19 @@ class ParserMock {
 	}
 
 	/**
-	 * Confirm that this parser will match the provided SNS event.
+	 * Confirm that this parser will match the provided SNS message.
 	 *
-	 * @param {string|{}} event Object or string payload
+	 * @param {string|{}} message Object or string message payload
 	 * @returns {ParserMock} Returns self for chain-able stacks
 	 */
-	matchesSNS(event) {
-		if (typeof event !== "string") {
-			event = JSON.stringify(event);
+	matchesSNS(message) {
+		if (typeof message !== "string") {
+			message = JSON.stringify(message);
 		}
 		function rand(digits) {
 			return String(Math.random() * 100000000).substr(0, digits);
 		}
-		event = {
+		const event = {
 			Records: [{
 				"EventSource": "aws:sns",
 				"EventVersion": "1.0",
@@ -60,7 +60,7 @@ class ParserMock {
 					"UnsubscribeUrl": "http://example.com/unsubscribeurl",
 					"Subject": "TestInvoke",
 					"MessageId": `95df01b4-ee${rand(2)}-5cb9-9903-4c221d41${rand(4)}`,
-					"Message": event,
+					"Message": message,
 					"MessageAttributes": {
 						"Test": {
 							"Type": "String",
