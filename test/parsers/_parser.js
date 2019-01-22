@@ -86,7 +86,8 @@ class ParserMock {
 		test(`Parser[${this.name}] is selected by Lambda handler`, async () => {
 			const msg = await this.makeNew().parse(event);
 			const h = await Handler.processEvent(event);
-			expect(h).toEqual(expect.objectContaining(msg));
+			expect(h.name).toEqual(this.name);
+			expect(h.slackMessage).toEqual(expect.objectContaining(msg));
 		});
 	}
 }
