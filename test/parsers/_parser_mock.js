@@ -25,7 +25,7 @@ class ParserMock {
 	 * @param {string} [subject] SNS message subject
 	 * @returns {{}} Translated event object
 	 */
-	static snsMessageToEvent(message, subject="TestInvoke") {
+	static snsMessageToEvent(message, subject) {
 		if (typeof message !== "string") {
 			message = JSON.stringify(message);
 		}
@@ -45,7 +45,7 @@ class ParserMock {
 					"Signature": "http://example.com/signature",
 					"SigningCertUrl": "http://example.com/signingcerturl",
 					"UnsubscribeUrl": "http://example.com/unsubscribeurl",
-					"Subject": subject,
+					"Subject": subject || "TestInvoke",
 					"MessageId": `95df01b4-ee${rand(2)}-5cb9-9903-4c221d41${rand(4)}`,
 					"Message": message,
 					"MessageAttributes": {
@@ -84,7 +84,7 @@ class ParserMock {
 	 * @param {string} [subject] SNS message subject
 	 * @returns {ParserMock} Returns self for chain-able stacks
 	 */
-	matchesSNS(message, subject="TestInvoke") {
+	matchesSNS(message, subject) {
 		this.matchesEvent(ParserMock.snsMessageToEvent(message, subject));
 		return this;
 	}
