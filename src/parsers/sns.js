@@ -15,6 +15,10 @@ class SNSParser {
 	 * @returns {Promise<?{}>} Slack message, if one was generated
 	 */
 	async parse(event) {
+		if (!_.has(event, "Records[0].Sns.Message")) {
+			return false;// not of interest for us
+		}
+
 		this.event = event;// store for future use in sub-class?
 		this.record = event.Records[0];
 
