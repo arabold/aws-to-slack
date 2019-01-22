@@ -36,7 +36,7 @@ class ParserMock {
 	 * Confirm that this parser will match the provided SNS message.
 	 *
 	 * @param {string|{}} message Object or string message payload
-	 * @param {string} [subject] SNS message subject, default="TestInvoke"
+	 * @param {string} [subject] SNS message subject
 	 * @returns {ParserMock} Returns self for chain-able stacks
 	 */
 	matchesSNS(message, subject="TestInvoke") {
