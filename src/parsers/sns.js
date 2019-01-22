@@ -1,57 +1,25 @@
 "use strict";
 
-const _ = require("lodash"),
-	Slack = require("../slack");
+const _ = require("lodash");
 
+/**
+ * Abstract SNS parsing class.
+ * Use by implementing handleMessage(message) inside sub-class.
+ */
 class SNSParser {
-
-	constructor() {
-		this.attachments = [];
-		this.in_flight = [];
-		this.event = null;
-		this.record = null;
-	}
-
-	async parse(event) {
-		this.event = event;
-		for (const i in event.Records) {
-			this.record = event.Records[i];
-			await this._parseRecord(this.record);
-		}
-
-		// If we only have attachments to send, we can return a single joined message.
-		// Otherwise, we have to manually send each message.
-
-		if (this.attachments.length) {
-			const slackMessage = { attachments: this.attachments };
-			if (!this.in_flight.length) { // did we send a custom message already?
-				// return single joined message (important for testing sub-classes)
-				return slackMessage;
-			}
-			else {
-				// can't return, so send all attachments as a single Slack message
-				this.in_flight.push(Slack.postMessage(slackMessage));
-			}
-		}
-
-		if (this.in_flight.length) {
-			await Promise.all(this.in_flight);
-			return true; // mark this message as "processed"
-		}
-
-		return false;
-	}
 
 	/**
 	 * Process an individual record from the SNS event.
 	 *
-	 * @param {{}} record Content of Sns.Message key
-	 * @returns {Promise<void>} No return value
-	 * @private
+	 * @param {{}} event Root event object containing a single-value "Records" array
+	 * @returns {Promise<?{}>} Slack message, if one was generated
 	 */
-	async _parseRecord(record) {
+	async parse(event) {
+		this.event = event;// store for future use in sub-class?
+		this.record = event.Records[0];
+
 		// Assume the message is a JSON string
-		let message = _.get(record, "Sns.Message");
+		let message = _.get(this.record, "Sns.Message");
 		if (_.isString(message)) {
 			try {
 				message = JSON.parse(message);
@@ -63,23 +31,9 @@ class SNSParser {
 
 		// Delegate processing to sub-class
 		const slackMessage = await this.handleMessage(message);
-		if (!slackMessage) {
-			return;// skip message
-		}
-
-		SNSParser.decorateWithSource(record, slackMessage);
-
-		const keys = _.keys(slackMessage);
-		if (keys.length === 1 && keys[0] === "attachments") {
-			// there are JUST attachments, we append to our primary message
-			for (const i in slackMessage.attachments) {
-				this.attachments.push(slackMessage.attachments[i]);
-			}
-		}
-		else {
-			// looks like a custom message, so must send individually
-			const promise = Slack.postMessage(slackMessage);
-			this.in_flight.push(promise);
+		if (slackMessage) {
+			SNSParser.decorateWithSource(this.record, slackMessage);
+			return slackMessage;
 		}
 	}
 
@@ -154,6 +108,7 @@ class SNSParser {
 	 *
 	 * @param {{}} message Parsed string from Sns.Message
 	 * @returns {{}|boolean} False if cannot handle message, object if can produce Slack message
+	 * @abstract
 	 */
 	handleMessage(message) {
 		throw `${message} - Implement in sub-class`;
