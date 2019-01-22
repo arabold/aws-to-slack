@@ -24,12 +24,12 @@ class SNSParser {
 
 		// Assume the message is a JSON string
 		let message = _.get(this.record, "Sns.Message");
-		if (_.isString(message)) {
+		if (_.isString(message) && _.startsWith(message, "{") && _.endsWith(message, "}")) {
 			try {
 				message = JSON.parse(message);
 			}
 			catch (err) {
-				console.log(`SNS message could not be JSON-parsed: ${err.message}`, message);
+				console.log(`Sns.Message looked like JSON, but failed parse: ${err.message}`, message);
 			}
 		}
 
