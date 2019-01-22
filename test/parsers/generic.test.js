@@ -2,6 +2,9 @@
 
 const mock = require("./_parser_mock").named("generic");
 
+// The generic parser is intended to match anything that DOES NOT match another parser.
+// Update these examples below if they happen to match your custom parser format.
+
 mock.matchesEvent({
 	Records: [{
 		"EventVersion": "1.0",
@@ -53,7 +56,7 @@ mock.matchesEvent({
 	"version": 2
 });
 
-test(`generic-parser will match simple event`, async () => {
+test(`Parser[generic] will match simple event`, async () => {
 	const event = {
 		test1: "test89",
 		test8: 7,
