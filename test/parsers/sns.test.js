@@ -1,17 +1,17 @@
 /* eslint-disable */
 
 const mock = require("./_parser_mock").named("sns");
-const parser = require(`../../src/parsers/sns`);
 
-test(`Parser[${mock.name}] exists`, () => {
+
+test(`Parser[${mock.name}] can be loaded and has .parse() method`, () => {
+	const parser = require(`../../src/parsers/sns`);
 	expect(parser).toEqual(expect.any(Function));
 	expect(parser.prototype)
 		.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
 });
 
-const instance = mock.makeNew();
 
-test(`Parser[${mock.name}] exists`, async () => {
+test(`Parser[${mock.name}] convenience functions return values`, async () => {
 	function rand(digits) {
 		return String(Math.random() * 100000000).substr(0, digits);
 	}
@@ -50,6 +50,7 @@ test(`Parser[${mock.name}] exists`, async () => {
 		}]
 	};
 
+	const instance = mock.makeNew();
 	instance.handleMessage = (record) => {
 		expect(record).toEqual(expect.objectContaining({ "foo": "bar" }));
 		expect(instance.getSubject()).toEqual(event.Records[0].Sns.Subject);
@@ -60,4 +61,15 @@ test(`Parser[${mock.name}] exists`, async () => {
 
 	expect.assertions(5);
 	await instance.parse(event);
+});
+
+test(`Parser[${mock.name}] will not accept any events`, async () => {
+	const event = { foo: "bar" };
+	const result = await mock.makeNew().parse(event);
+	expect(result).toBeFalsy();
+});
+
+test(`Parser[${mock.name}] handleMessage will throw`, () => {
+	const event = { foo: "bar" };
+	expect(() => mock.makeNew().handleMessage(event)).toThrow();
 });
