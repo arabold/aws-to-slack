@@ -18,35 +18,21 @@ class ParserMock {
 		return new ParserMock(name);
 	}
 
-	constructor(name) {
-		this.name = name;
-	}
-
 	/**
-	 * Create a new Parser instance.
-	 *
-	 * @returns {*} Parser instance
-	 */
-	makeNew() {
-		const parser = require(`../../src/parsers/${this.name}`);
-		return new parser();
-	}
-
-	/**
-	 * Confirm that this parser will match the provided SNS message.
+	 * Convert an SNS payload into a root event object.
 	 *
 	 * @param {string|{}} message Object or string message payload
 	 * @param {string} [subject] SNS message subject
-	 * @returns {ParserMock} Returns self for chain-able stacks
+	 * @returns {{}} Translated event object
 	 */
-	matchesSNS(message, subject="TestInvoke") {
+	static snsMessageToEvent(message, subject="TestInvoke") {
 		if (typeof message !== "string") {
 			message = JSON.stringify(message);
 		}
 		function rand(digits) {
 			return String(Math.random() * 100000000).substr(0, digits);
 		}
-		const event = {
+		return {
 			Records: [{
 				"EventSource": "aws:sns",
 				"EventVersion": "1.0",
@@ -75,8 +61,31 @@ class ParserMock {
 				},
 			}]
 		};
+	}
 
-		this.matchesEvent(event);
+	constructor(name) {
+		this.name = name;
+	}
+
+	/**
+	 * Create a new Parser instance.
+	 *
+	 * @returns {*} Parser instance
+	 */
+	makeNew() {
+		const parser = require(`../../src/parsers/${this.name}`);
+		return new parser();
+	}
+
+	/**
+	 * Confirm that this parser will match the provided SNS message.
+	 *
+	 * @param {string|{}} message Object or string message payload
+	 * @param {string} [subject] SNS message subject
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	matchesSNS(message, subject="TestInvoke") {
+		this.matchesEvent(ParserMock.snsMessageToEvent(message, subject));
 		return this;
 	}
 
@@ -92,26 +101,36 @@ class ParserMock {
 			event = JSON.parse(event);
 		}
 
-		test(`Parser[${this.name}] exists`, () => {
-			const parser = require(`../../src/parsers/${this.name}`);
-			expect(parser).toEqual(expect.any(Function));
-			expect(parser.prototype)
-				.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
-		});
+		describe(`Parser-Mock: ${this.name}`, () => {
+			test("parser exists", () => {
+				const parser = require(`../../src/parsers/${this.name}`);
+				expect(parser).toEqual(expect.any(Function));
+				expect(parser.prototype)
+					.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
+			});
 
-		test(`Parser[${this.name}] will match event`, async () => {
-			const msg = await this.makeNew().parse(event);
-			expect(msg).toEqual(expect.objectContaining({
-				attachments: [expect.any(Object)],
-			}));
-			expect(msg.attachments).toHaveLength(1);
-		});
+			test("parser will match event", async () => {
+				const msg = await this.makeNew().parse(event);
+				expect(msg).toBeTruthy();
+				// Confirm basic response structure
+				//TODO: this is pretty restrictive, what if parsers create fancy events?
+				expect(msg).toEqual(expect.objectContaining({
+					attachments: [expect.any(Object)],
+				}));
+				//TODO: this is a bad assumption -- there's no limit on number of attachments
+				expect(msg.attachments).toHaveLength(1);
+			});
 
-		test(`Parser[${this.name}] is selected by Lambda handler`, async () => {
-			const msg = await this.makeNew().parse(event);
-			const h = await Handler.processEvent(event);
-			expect(h.name).toEqual(this.name);
-			expect(h.slackMessage).toEqual(expect.objectContaining(msg));
+			test("parser is selected by Lambda handler", async () => {
+				const msg = await this.makeNew().parse(event);
+				const h = await Handler.processEvent(event);
+				expect(h).toEqual(expect.objectContaining({
+					name: this.name,
+					slackMessage: expect.any(Object),
+				}));
+				expect(h.name).toEqual(this.name);
+				expect(h.slackMessage).toEqual(expect.objectContaining(msg));
+			});
 		});
 
 		return this;
