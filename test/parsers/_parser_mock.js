@@ -36,9 +36,10 @@ class ParserMock {
 	 * Confirm that this parser will match the provided SNS message.
 	 *
 	 * @param {string|{}} message Object or string message payload
+	 * @param {string} [subject] SNS message subject, default="TestInvoke"
 	 * @returns {ParserMock} Returns self for chain-able stacks
 	 */
-	matchesSNS(message) {
+	matchesSNS(message, subject="TestInvoke") {
 		if (typeof message !== "string") {
 			message = JSON.stringify(message);
 		}
@@ -58,7 +59,7 @@ class ParserMock {
 					"Signature": "http://example.com/signature",
 					"SigningCertUrl": "http://example.com/signingcerturl",
 					"UnsubscribeUrl": "http://example.com/unsubscribeurl",
-					"Subject": "TestInvoke",
+					"Subject": subject,
 					"MessageId": `95df01b4-ee${rand(2)}-5cb9-9903-4c221d41${rand(4)}`,
 					"Message": message,
 					"MessageAttributes": {
