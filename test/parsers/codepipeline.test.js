@@ -2,7 +2,7 @@
 
 // codepipeline.StateChange.ManualApproval.json
 require("./_parser_mock")
-	.named("codepipeline")
+	.named("codepipelineSns")
 	.matchesSNS({
 		"version": "0",
 		"id": "abcdefgh-ee18-1111-3fc1-951f022567a1",
