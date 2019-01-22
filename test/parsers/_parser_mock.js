@@ -22,11 +22,22 @@ class ParserMock {
 		this.name = name;
 	}
 
+	/**
+	 * Create a new Parser instance.
+	 *
+	 * @returns {*} Parser instance
+	 */
 	makeNew() {
 		const parser = require(`../../src/parsers/${this.name}`);
 		return new parser();
 	}
 
+	/**
+	 * Confirm that this parser will match the provided SNS event.
+	 *
+	 * @param {string|{}} event Object or string payload
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
 	matchesSNS(event) {
 		if (typeof event !== "string") {
 			event = JSON.stringify(event);
@@ -64,10 +75,22 @@ class ParserMock {
 			}]
 		};
 
-		return this.matchesEvent(event);
+		this.matchesEvent(event);
+		return this;
 	}
 
+	/**
+	 * Confirm that this parser will match the provided raw event.
+	 *
+	 * @param {string|{}} event Object or string payload
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
 	matchesEvent(event) {
+		// .parse() method takes object, not string
+		if (typeof event === "string") {
+			event = JSON.parse(event);
+		}
+
 		test(`Parser[${this.name}] exists`, () => {
 			const parser = require(`../../src/parsers/${this.name}`);
 			expect(parser).toEqual(expect.any(Function));
@@ -89,6 +112,8 @@ class ParserMock {
 			expect(h.name).toEqual(this.name);
 			expect(h.slackMessage).toEqual(expect.objectContaining(msg));
 		});
+
+		return this;
 	}
 }
 
