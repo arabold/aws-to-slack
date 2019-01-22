@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-const mock = require("./_parser").named("sns");
+const mock = require("./_parser_mock").named("sns");
 const parser = require(`../../src/parsers/sns`);
 
 test(`Parser[${mock.name}] exists`, () => {

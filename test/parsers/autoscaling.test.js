@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-require("./_parser")
+require("./_parser_mock")
 	.named("autoscaling")
 	.matchesSNS({
 		"AccountId": "849571656326",

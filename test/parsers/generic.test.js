@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-const mock = require("./_parser").named("generic");
+const mock = require("./_parser_mock").named("generic");
 
 mock.matchesEvent({
 	Records: [{

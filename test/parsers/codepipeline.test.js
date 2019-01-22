@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 // codepipeline.StateChange.ManualApproval.json
-require("./_parser")
+require("./_parser_mock")
 	.named("codepipeline")
 	.matchesSNS({
 		"version": "0",
@@ -25,7 +25,7 @@ require("./_parser")
 	});
 
 // codepipeline-approval.ApprovalRequest.json
-require("./_parser")
+require("./_parser_mock")
 	.named("codepipeline-approval")
 	.matchesSNS({
 		"region": "us-east-1",
