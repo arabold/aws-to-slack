@@ -1,11 +1,9 @@
 /* eslint-disable */
 
-const mock = require("./_parser_mock").named("generic");
-
 // The generic parser is intended to match anything that DOES NOT match another parser.
 // Update these examples below if they happen to match your custom parser format.
 
-mock.matchesEvent({
+const snsMessageThatMatchesNothing = {
 	Records: [{
 		"EventVersion": "1.0",
 		"EventSubscriptionArn": `arn:aws:sns:region:account-id:topicname:subscriptionid`,
@@ -33,9 +31,9 @@ mock.matchesEvent({
 			"Subject": "TestInvoke"
 		}
 	}]
-});
+};
 
-mock.matchesEvent({
+const eventThatMatchesNothing = {
 	"datasetName": "datasetName",
 	"eventType": "SyncTrigger",
 	"region": "us-east-1",
@@ -54,9 +52,14 @@ mock.matchesEvent({
 	},
 	"identityPoolId": "identityPoolId",
 	"version": 2
-});
+};
 
-test(`Parser[generic] will match simple event`, async () => {
+
+const mock = require("./_parser_mock").named("generic");
+mock.matchesEvent(snsMessageThatMatchesNothing);
+mock.matchesEvent(eventThatMatchesNothing);
+
+test(`Parser[generic] will match event and provide detail`, async () => {
 	const event = {
 		test1: "test89",
 		test8: 7,
