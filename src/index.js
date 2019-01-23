@@ -97,25 +97,27 @@ class LambdaHandler {
 		try {
 			const handler = new LambdaHandler();
 
-			if (_.isArray(event.Records) && event.Records.length > 1) {
-				// If SNS contains >1 record, process each independently for they may be different types
-				for (const i in event.Records) {
+			// Handle SNS payloads with >1 messages differently!
+			// To keep parsers as simple as possible, merge event into single-Record messages.
+			const Records = _.get(event, "Records");
+			if (_.isArray(Records) && Records.length > 1) {
+				for (const i in Records) {
 					// Copy single record into event
 					const singleRecordEvent = _.assign({}, event, {
-						Records: [ event.Records[i] ],
+						Records: [ Records[i] ],
 					});
 
 					const parser = await handler.processEvent(singleRecordEvent);
 					if (parser) {
 						const message = parser.slackMessage;
-						console.log(`Sending Slack message from SNS-Parser[${parser.name}]:`, JSON.stringify(message, null, 2));
+						console.log(`SNS-Record[${i}]: Sending Slack message from Parser[${parser.name}]:`, JSON.stringify(message, null, 2));
 						await Slack.postMessage(message);
 					}
 					else if (handler.lastParser) {
-						console.error(`Parser force-ignoring SNS event[${i}]: ${handler.lastParser}`);
+						console.error(`SNS-Record[${i}]: Parser[${handler.lastParser}] is force-ignoring record`);
 					}
 					else {
-						console.log(`No parser matched SNS event[${i}]`);
+						console.log(`SNS-Record[${i}]: No parser matched record`);
 					}
 				}
 			}
@@ -127,7 +129,7 @@ class LambdaHandler {
 					await Slack.postMessage(message);
 				}
 				else if (handler.lastParser) {
-					console.error(`Parser[${handler.parserName}] is force-ignoring event`);
+					console.error(`Parser[${handler.lastParser}] is force-ignoring event`);
 				}
 				else {
 					console.log("No parser matched event");
