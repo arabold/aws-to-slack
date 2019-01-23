@@ -1,5 +1,5 @@
-/* global expect, test */
-/* eslint lodash/prefer-lodash-typecheck:0 */
+/* global expect, test, jest */
+/* eslint lodash/prefer-lodash-typecheck:0 lodash/prefer-lodash-method:0 */
 
 const Handler = require("../../src/index");
 
@@ -78,35 +78,35 @@ class ParserMock {
 	}
 
 	/**
-	 * Confirm that this parser will match the provided SNS message.
+	 * Confirm parser will match the provided raw event.
 	 *
-	 * @param {string|{}} message Object or string message payload
-	 * @param {string} [subject] SNS message subject
-	 * @returns {ParserMock} Returns self for chain-able stacks
-	 */
-	matchesSNS(message, subject) {
-		this.matchesEvent(ParserMock.snsMessageToEvent(message, subject));
-		return this;
-	}
-
-	/**
-	 * Confirm that this parser will match the provided raw event.
-	 *
-	 * @param {string|{}} event Object or string payload
+	 * @param {{}} event Object or string payload
 	 * @returns {ParserMock} Returns self for chain-able stacks
 	 */
 	matchesEvent(event) {
-		// .parse() method takes object, not string
-		if (typeof event === "string") {
-			event = JSON.parse(event);
-		}
-
 		describe(`Parser-Mock: ${this.name}`, () => {
 			test("parser exists", () => {
 				const parser = require(`../../src/parsers/${this.name}`);
 				expect(parser).toEqual(expect.any(Function));
 				expect(parser.prototype)
 					.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
+			});
+
+			test("parser.parse() is called", async () => {
+				const parser = require(`../../src/parsers/${this.name}`);
+				const handle = new Handler();
+				expect(handle.parsers).toContain(parser);
+
+				const mockParseFn = jest.fn().mockImplementation(() => false);
+				const mockParser = jest.fn().mockImplementation(() => {
+					return { parse: mockParseFn };
+				});
+				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
+
+				await handle.processEvent(event);
+				expect(mockParser).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledWith(event);
 			});
 
 			test("parser will match event", async () => {
@@ -123,7 +123,7 @@ class ParserMock {
 
 			test("parser is selected by Lambda handler", async () => {
 				const msg = await this.makeNew().parse(event);
-				const h = await Handler.processEvent(event);
+				const h = await new Handler().processEvent(event);
 				expect(h).toEqual(expect.objectContaining({
 					name: this.name,
 					slackMessage: expect.any(Object),
@@ -133,6 +133,127 @@ class ParserMock {
 			});
 		});
 
+		return this;
+	}
+
+	/**
+	 * Confirm parser will match the provided SNS message.
+	 *
+	 * @param {string|{}} message Object or string message payload
+	 * @param {string} [subject] SNS message subject
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	matchesSnsMessage(message, subject) {
+		this.matchesEvent(ParserMock.snsMessageToEvent(message, subject));
+		return this;
+	}
+
+	/**
+	 * Confirm that this parser will NOT match the provided raw event.
+	 *
+	 * @param {{}} event Object or string payload
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	doesNotMatchEvent(event) {
+		describe(`Parser-Mock: ${this.name}`, () => {
+			test("parser will NOT match event", async () => {
+				const msg = await this.makeNew().parse(event);
+				expect(msg).toBeFalsy();
+			});
+
+			test("parser.parse() is called", async () => {
+				const parser = require(`../../src/parsers/${this.name}`);
+				const handle = new Handler();
+				expect(handle.parsers).toContain(parser);
+
+				const mockParseFn = jest.fn().mockImplementation(() => false);
+				const mockParser = jest.fn().mockImplementation(() => {
+					return { parse: mockParseFn };
+				});
+				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
+
+				await handle.processEvent(event);
+				expect(mockParser).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledWith(event);
+			});
+
+			test("parser is NOT selected by Lambda handler", async () => {
+				const msg = await this.makeNew().parse(event);
+				const h = await new Handler().processEvent(event);
+				expect(h).not.toEqual(msg);
+				if (h) {
+					expect(h.name).not.toEqual(this.name);
+				}
+			});
+		});
+
+		return this;
+	}
+
+	/**
+	 * Confirm parser will NOT match the provided SNS message.
+	 *
+	 * @param {string|{}} message Object or string message payload
+	 * @param {string} [subject] SNS message subject
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	doesNotMatchSnsMessage(message, subject) {
+		this.doesNotMatchEvent(ParserMock.snsMessageToEvent(message, subject));
+		return this;
+	}
+
+	/**
+	 * Confirm parser will STOP handler processing when given the provided event object.
+	 *
+	 * @param {{}} event Object or string message payload
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	willStopHandlerWithEvent(event) {
+		describe(`Parser-Mock: ${this.name}`, () => {
+			test("parser matches event with truthy/empty object response", async () => {
+				const msg = await this.makeNew().parse(event);
+				expect(msg).toBeTruthy();
+				if (msg !== true) {
+					expect(msg).toEqual({});
+				}
+			});
+
+			test("parser.parse() is called", async () => {
+				const parser = require(`../../src/parsers/${this.name}`);
+				const handle = new Handler();
+				expect(handle.parsers).toContain(parser);
+
+				const mockParseFn = jest.fn().mockImplementation(() => false);
+				const mockParser = jest.fn().mockImplementation(() => {
+					return { parse: mockParseFn };
+				});
+				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
+
+				await handle.processEvent(event);
+				expect(mockParser).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledTimes(1);
+				expect(mockParseFn).toHaveBeenCalledWith(event);
+			});
+
+			test("parser forces Lambda handler to return null", async () => {
+				const h = await new Handler().processEvent(event);
+				expect(h).toEqual(null);
+			});
+		});
+
+		return this;
+	}
+
+	/**
+	 * Confirm parser will STOP handler processing when given the provided SNS message.
+	 *
+	 * @param {string|{}} message Object or string message payload
+	 * @param {string} [subject] SNS message subject
+	 * @returns {ParserMock} Returns self for chain-able stacks
+	 */
+	willStopHandlerWithSnsEvent(message, subject) {
+		this.willStopHandlerWithEvent(ParserMock.snsMessageToEvent(message, subject));
 		return this;
 	}
 }
