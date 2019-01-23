@@ -55,6 +55,7 @@ class LambdaHandler {
 				if (message) {
 					// Truthy but empty message will stop execution
 					if (message === true || _.isEmpty(message)) {
+						// leave value in this.lastParser
 						return null;// never send empty message
 					}
 
@@ -67,6 +68,8 @@ class LambdaHandler {
 			catch (e) {
 				console.error(`Error parsing event [parser:${parserName}]:`, e);
 			}
+			// clear state
+			this.lastParser = null;
 		}
 	}
 
