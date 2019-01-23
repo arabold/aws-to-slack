@@ -1,31 +1,152 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-
+Description: 'SNS notification sent to Slack channel'
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+    - Label:
+        default: 'Slack Setup'
+      Parameters:
+      - HookUrl
+      - Channel
+      - KmsDecryptKeyArn
+    - Label:
+        default: 'Default Subscriptions'
+      Parameters:
+      - ParentAlertStack
+      - ErrorAlertEmail
 Parameters:
+  ParentAlertStack:
+    Type: String
+    Description: 'Optional: Stack name containing SNS topic from https://github.com/widdix/aws-cf-templates/blob/master/operations/alert.yaml'
+  ErrorAlertEmail:
+    Description: 'Optional: email address to receive alert that function is failing. The email will only contain a count of failures -- you will need to then review CloudWatch logs to determine cause of the issue. HIGHLY RECOMMEND handling failures like this within a DeadLetterQueue via ParentAlertStack instead.'
+    Type: String
+    Default: ''
   HookUrl:
-    Description: Slack webhook URL; see https://example.slack.com/apps/
     Type: String
+    Description: 'Slack webhook URL; see https://example.slack.com/apps/'
   Channel:
-    Description: Channel name to post to (optional)
     Type: String
+    Description: 'Optional: Channel name to post within'
+    Default: ''
+  KmsDecryptKeyArn:
+    Type: String
+    Description: 'Optional: Key used to encrypt Hook or Channel values. If provided will create IAM policy to grant access to decrypt the values.'
+    Default: ''
 
 Conditions:
   HasChannel: !Not [!Equals [!Ref Channel, '']]
+  HasKmsKey: !Not [!Equals [!Ref KmsDecryptKeyArn, '']]
+  HasAlertStack: !Not [!Equals [!Ref ParentAlertStack, '']]
+  HasAlertEmail: !Not [!Equals [!Ref ErrorAlertEmail, '']]
+  NeedsAlarm: !Or [Condition: HasAlertStack, Condition: HasAlertEmail]
 
 Resources:
-  Handler:
-    Type: AWS::Serverless::Function
+  Function:
+    Type: 'AWS::Lambda::Function'
     Properties:
       Handler: src/index.handler
-      Runtime: nodejs6.10
-      CodeUri:
-        Bucket: !Sub "aws-to-slack-${AWS::Region}"
-        Key: release.zip
+      Role: !GetAtt FunctionRole.Arn
+      Runtime: nodejs8.10
       MemorySize: 256
       Timeout: 10
-      Policies: CloudWatchReadOnlyAccess
+      Code:
+        S3Bucket: !Sub 'aws-to-slack-${AWS::Region}'
+        S3Key: release.zip
       Environment:
         Variables:
+          SLACK_CHANNEL: !If
+            - HasChannel
+            - !Ref Channel
+            - !Ref 'AWS::NoValue'
           SLACK_HOOK_URL: !Ref HookUrl
-          SLACK_CHANNEL: !If [HasChannel, !Ref Channel, !Ref 'AWS::NoValue']
+  FunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action: [ 'sts:AssumeRole' ]
+          Effect: Allow
+          Principal:
+            Service: [ 'lambda.amazonaws.com' ]
+  KmsDecryptPolicy:
+    Condition: HasKmsKey
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      Roles: [ !Ref FunctionRole ]
+      PolicyName: AllowDecryptKms
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: [ 'kms:Decrypt' ]
+          Resource: !Ref KmsDecryptKeyArn
+  LambdaInvokeBySns:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com' # Allow SNS Notifications
+  LambdaInvokeByEvents:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com' # Allow CloudWatch Events
+  LambdaInvokeByRds:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 'rds.amazonaws.com' # Allow RDS Events
+  LambdaInvokeByS3:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref Function
+      Action: 'lambda:InvokeFunction'
+      Principal: 's3.amazonaws.com' # Allow S3 Event Notifications
+  TriggerFromAlertStack:
+    Condition: HasAlertStack
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
+      Protocol: lambda
+      Endpoint: !GetAtt Function.Arn
+
+  #
+  # CloudWatch Alarm
+  #
+  FunctionFailing:
+    Condition: NeedsAlarm
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'AWS-to-Slack Lambda function is failing'
+      Namespace: 'AWS/Lambda'
+      MetricName: Errors
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      TreatMissingData: notBreaching
+      Dimensions:
+      - Name: FunctionName
+        Value: !Ref Function
+      AlarmActions:
+      - !Ref FunctionFailingTopic
+  FunctionFailingTopic:
+    Condition: NeedsAlarm
+    Type: 'AWS::SNS::Topic'
+    Properties: {}
+  FunctionFailingEmailSubscription:
+    Condition: HasAlertEmail
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: !Ref FunctionFailingTopic
+      Protocol: email
+      Endpoint: !Ref ErrorAlertEmail

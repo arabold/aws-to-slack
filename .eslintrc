@@ -1,5 +1,8 @@
 ---
 # Based on the AirBnb JavaScript styleguides with our own twist
+parserOptions:
+  ecmaVersion: 8
+  sourceType: module
 env:
   es6: true
   node: true
@@ -37,7 +40,6 @@ rules:
   no-var: error
   valid-jsdoc: [ warn, { prefer: { "arg": "param", "argument": "param", "class": "constructor", "return": "returns", "virtual": "abstract" } } ]
   promise/no-nesting: off
-  promise/valid-params: off # we use Bluebird which isn't supported properly
   import/first: error
   import/newline-after-import: error
   import/no-named-as-default: off
@@ -46,4 +48,4 @@ rules:
   lodash/preferred-alias: off
   lodash/prop-shorthand: off
   lodash/prefer-constant: off
-  lodash/prefer-lodash-method: [ error, { ignoreObjects: [ BbPromise, router, "React\\.Children" ] } ]
+  lodash/prefer-lodash-method: [ error, { ignoreObjects: [ ] } ]
