@@ -1,8 +1,8 @@
 "use strict";
 
-const _ = require("lodash"),
-	Slack = require("./slack"),
-	parsers = _.map([
+const _ = require("lodash")
+	, Slack = require("./slack")
+	, defaultParserWaterfall = [
 		// Ordered list of parsers:
 		"cloudwatch",
 		"codecommit/pullrequest",
@@ -21,19 +21,19 @@ const _ = require("lodash"),
 		"inspector",
 		"rds",
 		"ses-received",
-		// Last attempt to parse, will match any:
+		// Last attempt to parse, will match any message:
 		"generic",
-	], name => [name, require(`./parsers/${name}`)]);
+	];
 
 class LambdaHandler {
 
 	constructor() {
 		// clone so can be tested
-		this.parsers = new Array(parsers.length);
-		this.parserNames = new Array(parsers.length);
-		_.each(parsers, (o, i) => {
-			this.parserNames[i] = o[0];
-			this.parsers[i] = o[1];
+		this.parsers = new Array(defaultParserWaterfall.length);
+		this.parserNames = new Array(defaultParserWaterfall.length);
+		_.each(defaultParserWaterfall, (name, i) => {
+			this.parserNames[i] = name;
+			this.parsers[i] = require(`./parsers/${name}`);
 		});
 		this.lastParser = null;
 	}
