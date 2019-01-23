@@ -31,6 +31,7 @@ package:
 
 .PHONY: publish
 publish:
+
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-us-east-2" --acl public-read
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-us-east-1" --acl public-read
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-us-west-1" --acl public-read
@@ -46,8 +47,8 @@ publish:
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-eu-west-2" --acl public-read
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-eu-west-3" --acl public-read
 	@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-sa-east-1" --acl public-read
-	#@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-cn-north-1" --acl public-read
-	#@"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-cn-northwest-1" --acl public-read
+	# @"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-cn-north-1" --acl public-read
+	# @"$(AWS_CLI)" s3 cp "./cloudformation.yaml" "s3://aws-to-slack-cn-northwest-1" --acl public-read
 
 	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-us-east-2" --acl public-read
 	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-us-east-1" --acl public-read
@@ -64,5 +65,5 @@ publish:
 	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-eu-west-2" --acl public-read
 	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-eu-west-3" --acl public-read
 	@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-sa-east-1" --acl public-read
-	#@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-cn-north-1" --acl public-read
-	#@"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-cn-northwest-1" --acl public-read
+	# @"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-cn-north-1" --acl public-read
+	# @"$(AWS_CLI)" s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-cn-northwest-1" --acl public-read
