@@ -21,6 +21,7 @@ function processIncoming(event) {
 		require("./parsers/codecommit/pullrequest"),
 		require("./parsers/codecommit/repository"),
 		require("./parsers/guardduty"),
+		require("./parsers/batch-events"),
 	];
 
 	// Execute all parsers and use the first successful result
