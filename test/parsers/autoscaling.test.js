@@ -12,4 +12,4 @@ const exampleSnsMessage = {
 
 require("./_parser_mock")
 	.named("autoscaling")
-	.matchesSNS(exampleSnsMessage);
+	.matchesSnsMessage(exampleSnsMessage);

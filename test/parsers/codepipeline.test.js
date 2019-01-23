@@ -24,7 +24,7 @@ const exampleManualApprovalStateChange = {
 
 require("./_parser_mock")
 	.named("codepipelineSns")
-	.matchesSNS(exampleManualApprovalStateChange);
+	.matchesSnsMessage(exampleManualApprovalStateChange);
 
 
 // AWS example event: codepipeline-approval.ApprovalRequest.json
@@ -45,4 +45,4 @@ const exampleApprovalRequest = {
 
 require("./_parser_mock")
 	.named("codepipeline-approval")
-	.matchesSNS(exampleApprovalRequest);
+	.matchesSnsMessage(exampleApprovalRequest);
