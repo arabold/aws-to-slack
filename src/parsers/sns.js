@@ -36,7 +36,7 @@ class SNSParser {
 		// Delegate processing to sub-class
 		const slackMessage = await this.handleMessage(message);
 		if (slackMessage) {
-			SNSParser.decorateWithSource(this.record, slackMessage);
+			this.decorateWithSource(slackMessage);
 			return slackMessage;
 		}
 	}
@@ -87,13 +87,20 @@ class SNSParser {
 		return "";
 	}
 
-	static decorateWithSource(record, slackMessage) {
+	/**
+	 * Add default values when not filled by sub-class.
+	 *
+	 * @param {{}} slackMessage Message to populate
+	 * @returns {void} Nothing
+	 * @protected
+	 */
+	decorateWithSource(slackMessage) {
 		const att = _.get(slackMessage, "attachments[0]");
 
 		if (att && !att.footer) {
 			// Add link to SNS ARN in footer
 			// Example: arn:aws:sns:region:account-id:topicname:subscriptionid
-			const snsArn = _.split(record.EventSubscriptionArn, ":");
+			const snsArn = _.split(this.record.EventSubscriptionArn, ":");
 			// Only override empty footers
 			if (snsArn.length >= 6) {
 				const region = snsArn[3];
@@ -103,6 +110,22 @@ class SNSParser {
 				const signin = `https://${accountId}.signin.aws.amazon.com/console/sns?region=${region}`;
 
 				att.footer = `Received via <${url}|SNS ${topic}> | <${signin}|Sign-In>`;
+
+				// We use markdown syntax; make sure "footer" is parsed correctly
+				if (!att.mrkdwn === true) { // mrkdwn:true means everything has Markdown
+					const mrkdwn = att.mrkdwn_in;
+					if (!mrkdwn) {
+						att.mrkdwn_in = ["footer"];
+					}
+					else if (_.isArray(mrkdwn) && !_.includes(mrkdwn, "footer")) {
+						mrkdwn.push("footer");
+					}
+					else {
+						console.error(`SNSParser.decorateWithSource: invalid "mrkdwn_in" value: ${JSON.serialize(slackMessage)}`);
+						// fallback to text-only
+						att.footer = `Received via SNS ${topic}`;
+					}
+				}
 			}
 		}
 	}
