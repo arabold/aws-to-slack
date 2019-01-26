@@ -110,22 +110,6 @@ class SNSParser {
 				const signin = `https://${accountId}.signin.aws.amazon.com/console/sns?region=${region}`;
 
 				att.footer = `Received via <${url}|SNS ${topic}> | <${signin}|Sign-In>`;
-
-				// We use markdown syntax; make sure "footer" is parsed correctly
-				if (!att.mrkdwn === true) { // mrkdwn:true means everything has Markdown
-					const mrkdwn = att.mrkdwn_in;
-					if (!mrkdwn) {
-						att.mrkdwn_in = ["footer"];
-					}
-					else if (_.isArray(mrkdwn) && !_.includes(mrkdwn, "footer")) {
-						mrkdwn.push("footer");
-					}
-					else {
-						console.error(`SNSParser.decorateWithSource: invalid "mrkdwn_in" value: ${JSON.serialize(slackMessage)}`);
-						// fallback to text-only
-						att.footer = `Received via SNS ${topic}`;
-					}
-				}
 			}
 		}
 	}
