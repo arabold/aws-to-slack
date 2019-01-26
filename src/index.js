@@ -9,6 +9,7 @@ const _ = require("lodash")
 		"codecommit/repository",
 		"autoscaling",
 		"aws-health",
+		"batch-events",
 		"beanstalk",
 		"cloudformation",
 		"codebuild",
