@@ -34,6 +34,10 @@ Parameters:
     Type: String
     Description: 'Optional: Key used to encrypt Hook or Channel values. If provided will create IAM policy to grant access to decrypt the values.'
     Default: ''
+  DirectDeploy:
+    Type: String
+    Description: 'Optional: If any value is passed, this will deploy a cloudformation stack from your local build directory. Otherwise, it will deploy from the published release.'
+    Default: ''
 
 Conditions:
   HasChannel: !Not [!Equals [!Ref Channel, '']]
@@ -41,10 +45,16 @@ Conditions:
   HasAlertStack: !Not [!Equals [!Ref ParentAlertStack, '']]
   HasAlertEmail: !Not [!Equals [!Ref ErrorAlertEmail, '']]
   NeedsAlarm: !Or [Condition: HasAlertStack, Condition: HasAlertEmail]
+  DirectDeploy: !Not [!Equals [!Ref DirectDeploy, '']]
+  PackagedDeploy: !Equals [!Ref DirectDeploy, '']
 
 Resources:
-  Function:
+  # Only one lambda will be created, depending on if this is a deploy of the
+  # public template. The two functions below should be identical, except for their `Code` property
+  # Deploys the packaged, public stack
+  AWSToSlackHandler:
     Type: 'AWS::Lambda::Function'
+    Condition: PackagedDeploy
     Properties:
       Handler: src/index.handler
       Role: !GetAtt FunctionRole.Arn
@@ -61,6 +71,26 @@ Resources:
             - !Ref Channel
             - !Ref 'AWS::NoValue'
           SLACK_HOOK_URL: !Ref HookUrl
+
+  # Deploys release.zip from your filesystem
+  Handler:
+    Type: 'AWS::Lambda::Function'
+    Condition: DirectDeploy
+    Properties:
+      Handler: src/index.handler
+      Role: !GetAtt FunctionRole.Arn
+      Runtime: nodejs8.10
+      MemorySize: 256
+      Timeout: 10
+      Code: ./build/release.zip
+      Environment:
+        Variables:
+          SLACK_CHANNEL: !If
+            - HasChannel
+            - !Ref Channel
+            - !Ref 'AWS::NoValue'
+          SLACK_HOOK_URL: !Ref HookUrl
+
   FunctionRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -89,25 +119,25 @@ Resources:
   LambdaInvokeBySns:
     Type: 'AWS::Lambda::Permission'
     Properties:
-      FunctionName: !Ref Function
+      FunctionName: !If [DirectDeploy, !Ref Handler, !Ref AWSToSlackHandler]
       Action: 'lambda:InvokeFunction'
       Principal: 'sns.amazonaws.com' # Allow SNS Notifications
   LambdaInvokeByEvents:
     Type: 'AWS::Lambda::Permission'
     Properties:
-      FunctionName: !Ref Function
+      FunctionName: !If [DirectDeploy, !Ref Handler, !Ref AWSToSlackHandler]
       Action: 'lambda:InvokeFunction'
       Principal: 'events.amazonaws.com' # Allow CloudWatch Events
   LambdaInvokeByRds:
     Type: 'AWS::Lambda::Permission'
     Properties:
-      FunctionName: !Ref Function
+      FunctionName: !If [DirectDeploy, !Ref Handler, !Ref AWSToSlackHandler]
       Action: 'lambda:InvokeFunction'
       Principal: 'rds.amazonaws.com' # Allow RDS Events
   LambdaInvokeByS3:
     Type: 'AWS::Lambda::Permission'
     Properties:
-      FunctionName: !Ref Function
+      FunctionName: !If [DirectDeploy, !Ref Handler, !Ref AWSToSlackHandler]
       Action: 'lambda:InvokeFunction'
       Principal: 's3.amazonaws.com' # Allow S3 Event Notifications
   TriggerFromAlertStack:
@@ -116,7 +146,7 @@ Resources:
     Properties:
       TopicArn: {'Fn::ImportValue': !Sub '${ParentAlertStack}-TopicARN'}
       Protocol: lambda
-      Endpoint: !GetAtt Function.Arn
+      Endpoint: !If [DirectDeploy, !GetAtt Handler.Arn, !GetAtt AWSToSlackHandler.Arn]
 
   #
   # CloudWatch Alarm
@@ -136,7 +166,7 @@ Resources:
       TreatMissingData: notBreaching
       Dimensions:
       - Name: FunctionName
-        Value: !Ref Function
+        Value: !If [DirectDeploy, !Ref Handler, !Ref AWSToSlackHandler]
       AlarmActions:
       - !Ref FunctionFailingTopic
   FunctionFailingTopic:
