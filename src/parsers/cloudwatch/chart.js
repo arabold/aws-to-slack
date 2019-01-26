@@ -164,6 +164,7 @@ class AwsCloudWatchChart {
 		await Promise.all([
 			Promise.all(_.invokeMap(this.metrics, "getStatistics")),
 			Promise.all(_.invokeMap(this.metrics, "getThreshold")),
+			Promise.all(_.invokeMap(this.metrics, "getMetricFilters")),
 		]);
 		return this;
 	}
@@ -200,6 +201,21 @@ class AwsCloudWatchChart {
 		};
 		const result = await this.cloudwatch.describeAlarmsForMetric(params).promise();
 		return _.get(result, "MetricAlarms[0]");
+	}
+
+	/**
+	 * @param {AWS.CloudWatch.Types.DescribeMetricFiltersRequest} query Containing query
+	 * @returns {Promise<[]>} Result of call
+	 */
+	async getMetricFilters(query) {
+		const params = {
+			metricName: query.MetricName,
+			metricNamespace: query.Namespace,
+			limit: 1,
+		};
+		const cloudwatchlogs = new AWS.CloudWatchLogs();
+		const result = await cloudwatchlogs.describeMetricFilters(params).promise();
+		return _.get(result, "metricFilters[0]");
 	}
 
 	async listMetrics(Namespace, MetricName) {
@@ -273,6 +289,46 @@ class AwsCloudWatchChart {
 		}
 
 		return timeSlots;
+	}
+
+	/**
+	 * Generate a link to CloudWatch page filtering on logs for the given metric.
+	 *
+	 * @param {number|string} timestamp Time of message
+	 * @param {string} [region] Region to set in link
+	 * @returns {string} The URL
+	 */
+	getCloudWatchURL(timestamp, region) {
+		// Look up alarm, then metric filter, to get filter pattern so that we can generate a relevant cloudwatch link
+		const filterDef = _.get(this.metrics, "[0].filterDef");
+		if (!filterDef) {
+			return null;
+		}
+		const { filterPattern, logGroupName } = filterDef;
+
+		// Generates start and end time ISO strings one hour before to one hour after the supplied timestamp
+		const eventTime = new Date(timestamp);
+		eventTime.setUTCMinutes(0);
+		eventTime.setUTCSeconds(0);
+		eventTime.setUTCMilliseconds(0);
+
+		const eventHour = eventTime.getUTCHours();
+		const startTime = new Date(eventTime);
+		startTime.setUTCHours(eventHour - 1);
+		const endTime = new Date(eventTime);
+		endTime.setUTCHours(eventHour + 1);
+		const logsTimeRange = {
+			start: startTime.toISOString(),
+			end: endTime.toISOString()
+		};
+
+		if (!region) {
+			region = "us-east-1";
+		}
+		return `https://console.aws.amazon.com/cloudwatch/home?region=${region}`
+			+ `#logEventViewer:group=${encodeURIComponent(logGroupName)}`
+			+ `;filter=${encodeURIComponent(filterPattern)}`
+			+ `;start=${logsTimeRange.start};end=${logsTimeRange.end}`;
 	}
 
 	getURL() {
@@ -389,6 +445,7 @@ class AwsCloudWatchChartMetric {
 		this.dashed = false;
 		this.datapoints = null;
 		this.threshold = null;
+		this.filterDef = null;
 
 		this.query = {
 			Namespace: "AWS/EC2",
@@ -426,6 +483,12 @@ class AwsCloudWatchChartMetric {
 		const def = await this.chart.describeAlarm(this.query);
 		this.threshold = def.Threshold;
 		return this.threshold;
+	}
+
+	async getMetricFilters() {
+		const def = await this.chart.getMetricFilters(this.query);
+		this.filterDef = def;
+		return def;
 	}
 }
 

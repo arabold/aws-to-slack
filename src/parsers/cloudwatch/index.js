@@ -1,9 +1,9 @@
 "use strict";
 
-const _ = require("lodash"),
-	Chart = require("./chart"),
-	SNSParser = require("./../sns"),
-	Slack = require("../../slack");
+const _ = require("lodash")
+	, Chart = require("./chart")
+	, SNSParser = require("./../sns")
+	, Slack = require("../../slack");
 
 class CloudWatchParser extends SNSParser {
 
@@ -22,6 +22,7 @@ class CloudWatchParser extends SNSParser {
 		const regionName = message.Region;
 		const time = message.StateChangeTime;
 		const region = this.getRegion();
+		//todo: this is region of the SNS topic, not the message, transform regionName -> region!
 
 		let color = Slack.COLORS.neutral;
 		switch (newState) {
@@ -37,13 +38,20 @@ class CloudWatchParser extends SNSParser {
 		}
 
 		// Render chart
-		let image_url;
+		let image_url, logsUrl;
 		try {
-			image_url = await this.getChartUrl(message);
+			const chart = await this.getChart(message);
+			logsUrl = chart.getCloudWatchURL(this.getTimestamp(), region);
+			image_url = chart.getURL(message);
+
 		}
 		catch (err) {
 			console.log("Error rendering chart:", err);
 		}
+
+		const text = logsUrl
+			? `${reason} (<${logsUrl}|See recent logs>)`
+			: reason;
 
 		return {
 			attachments: [{
@@ -52,7 +60,7 @@ class CloudWatchParser extends SNSParser {
 				author_name: `AWS CloudWatch Alarm (${accountId})`,
 				title: alarmName,
 				title_link: `https://console.aws.amazon.com/cloudwatch/home?region=${region}#alarm:name=${alarmName}`,
-				text: reason,
+				text,
 				fields: [{
 					title: "State Change",
 					value: `${oldState} → ${newState}`,
@@ -68,7 +76,7 @@ class CloudWatchParser extends SNSParser {
 		};
 	}
 
-	async getChartUrl(message) {
+	async getChart(message) {
 		const trigger = message.Trigger;
 		const metric = {
 			title: `${trigger.MetricName} (${trigger.Statistic}/${trigger.Period}s)`,
@@ -99,7 +107,7 @@ class CloudWatchParser extends SNSParser {
 			height: 220,
 		});
 		await chart.load();
-		return chart.getURL();
+		return chart;
 	}
 }
 
