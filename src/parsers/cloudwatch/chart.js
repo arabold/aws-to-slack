@@ -96,7 +96,7 @@ class AwsCloudWatchChart {
 	 * @param {{}} [config] Configuration object
 	 * @returns {Promise} Success or failure only
 	 */
-	static async configureAwsSdk(config) {
+	static configureAwsSdk(config) {
 		return new Promise((resolve, reject) => {
 			config = config || {};
 			AWS.config.update({
@@ -172,72 +172,47 @@ class AwsCloudWatchChart {
 	 * @param {AWS.CloudWatch.Types.GetMetricStatisticsInput} query Query object
 	 * @returns {Promise<[]>} Result of call
 	 */
-	getStatistics(query) {
-		return new Promise((resolve, reject) => {
-			const toTime = new Date();
-			const fromTime = new Date();
+	async getStatistics(query) {
+		const toTime = new Date();
+		const fromTime = new Date();
 
-			fromTime.setTime(toTime.getTime() - this.timeOffset * 60 * 1000);
+		fromTime.setTime(toTime.getTime() - this.timeOffset * 60 * 1000);
 
-			query = _.assign({
-				EndTime: toTime,
-				StartTime: fromTime,
-				Period: this.timePeriod,
-			}, query);
+		query = _.assign({
+			EndTime: toTime,
+			StartTime: fromTime,
+			Period: this.timePeriod,
+		}, query);
 
-			this.cloudwatch.getMetricStatistics(query, (err, data) => {
-				if (err) {
-					reject(err);
-				}
-				else {
-					resolve(data.Datapoints);
-				}
-			});
-		});
+		const result = await this.cloudwatch.getMetricStatistics(query).promise();
+		return result.Datapoints;
 	}
 
 	/**
 	 * @param {AWS.CloudWatch.Types.DescribeAlarmsForMetricInput} query Containing query
 	 * @returns {Promise<[]>} Result of call
 	 */
-	describeAlarm(query) {
-		return new Promise((resolve, reject) => {
-			const params = {
-				Namespace: query.Namespace,
-				MetricName: query.MetricName,
-				Dimensions: query.Dimensions,
-			};
-			this.cloudwatch.describeAlarmsForMetric(params, (err, data) => {
-				if (err) {
-					reject(err);
-				}
-				else {
-					resolve(data.MetricAlarms[0]);
-				}
-			});
-		});
+	async describeAlarm(query) {
+		const params = {
+			Namespace: query.Namespace,
+			MetricName: query.MetricName,
+			Dimensions: query.Dimensions,
+		};
+		const result = await this.cloudwatch.describeAlarmsForMetric(params).promise();
+		return _.get(result, "MetricAlarms[0]");
 	}
 
-	listMetrics(Namespace, MetricName) {
-		return new Promise((resolve, reject) => {
-			if (_.isEmpty(Namespace)) {
-				Namespace = "AWS/EC2";
-			}
-			if (_.isEmpty(MetricName)) {
-				MetricName = "CPUUtilization";
-			}
+	async listMetrics(Namespace, MetricName) {
+		if (_.isEmpty(Namespace)) {
+			Namespace = "AWS/EC2";
+		}
+		if (_.isEmpty(MetricName)) {
+			MetricName = "CPUUtilization";
+		}
 
-			const params = { Namespace, MetricName };
-
-			this.cloudwatch.listMetrics(params, (err, data) => {
-				if (err) {
-					reject(err);
-				}
-				else {
-					resolve(data.Metrics);
-				}
-			});
-		});
+		const params = { Namespace, MetricName };
+		const result = await this.cloudwatch.listMetrics(params).promise();
+		return result.Metrics;
 	}
 
 
