@@ -132,20 +132,20 @@ Add the `aws-to-slack` lambda as the target. No other settings are needed.
 
 ## Managing Multiple Deployments
 
-You can save local `.env` files that contain your stack configurations for easier deployment and updates.  Copy `example.env` to a separate file and customize the parameters.  Then deploy the file like this:
+You can save local `.env` files that contain your stack configurations for easier deployment and updates.  Copy `targets/example.env` to a separate file and customize the parameters.  Then deploy the file like this:
 
 ```bash
-TARGET=my-deploy.env make deploy
+TARGET=targets/my-deploy.env make deploy
 ```
 
 If you want to force-compile this project and push your code to a stack, use this:
 ```bash
-TARGET=my-deploy.env make package deploy
+TARGET=targets/my-deploy.env make package deploy
 ```
 
 If you need to update your CloudFormation parameters, try this:
 ```bash
-TARGET=my-deploy.env make update-stack
+TARGET=targets/my-deploy.env make update-stack
 ```
 
 ## Contributing
