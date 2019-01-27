@@ -1,6 +1,6 @@
 AWS_CLI	   ?= /usr/local/bin/aws
 TEMP_PATH   = .temp
-RELEASE_ZIP = build/release.zip
+RELEASE_ZIP = release.zip
 
 # Load from .env file
 ifdef TARGET

@@ -4,3 +4,4 @@ sample-data
 .DS_Store
 .idea/*
 *.env
+release.zip
