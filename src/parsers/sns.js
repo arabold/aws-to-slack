@@ -108,8 +108,18 @@ class SNSParser {
 				const topic = snsArn[5];
 				const url = `https://console.aws.amazon.com/sns/v2/home?region=${region}#/topics/arn:aws:sns:${region}:${accountId}:${topic}`;
 				const signin = `https://${accountId}.signin.aws.amazon.com/console/sns?region=${region}`;
+				// limit visible length of topic
+				const topicVisible = topic.length > 40
+					? topic.substr(0, 35) + "..."
+					: topic;
 
-				att.footer = `Received via <${url}|SNS ${topic}> | <${signin}|Sign-In>`;
+				att.footer = `Received via <${url}|SNS ${topicVisible}> | <${signin}|Sign-In>`;
+
+				// footer is limited to 300 chars, seemingly including URLs
+				// https://api.slack.com/docs/message-attachments#footer
+				if (att.footer.length > 300) {
+					att.footer = `Received via <${url}|SNS ${topicVisible}>`;
+				}
 			}
 		}
 	}
