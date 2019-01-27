@@ -13,10 +13,11 @@ ifdef AWS_REGION
   regionArg= --region $(AWS_REGION)
 endif
 ifndef LAMBDA_NAME
+  ifndef STACK_ID
+  usesLambdaName := create-stack load-lambda-name
+  else
   usesLambdaName := load-lambda-name
-endif
-ifndef STACK_ID
-  usesStackId := create-stack
+  endif
 endif
 ifeq (,$(wildcard $(RELEASE_ZIP)))
   usesReleaseZip := package
@@ -83,7 +84,7 @@ load-lambda-name:
 
 # Update existing Lambda function
 .PHONY: deploy
-deploy: $(usesReleaseZip) $(usesStackId) $(usesLambdaName)
+deploy: $(usesReleaseZip) $(usesLambdaName)
 	# Update Lambda function code
 	aws lambda update-function-code --function-name "$(LAMBDA_NAME)" \
 		$(regionArg) --zip-file "fileb://$(RELEASE_ZIP)" --publish
