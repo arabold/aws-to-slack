@@ -1,67 +1,75 @@
 "use strict";
 
-const BbPromise = require("bluebird"),
-	_ = require("lodash"),
+const _ = require("lodash"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
-class CodePipelineApprovalParser {
+class CodePipelineApprovalParser extends SNSParser {
 
-	parse(event) {
-		//console.log("CodePipeline.Approval :: start...");
-		//console.log(_.get(event, "Records[0].Sns.Message", "{}"));
-		return BbPromise.try(() => 
-			JSON.parse(_.get(event, "Records[0].Sns.Message", "{}")))
-		.catch(_.noop) // ignore JSON errors
-		.then(message => {
+	handleMessage(message) {
+		// Check that this is a CodePipeline APPROVAL message
+		if (!_.has(message, "approval.pipelineName") || !_.has(message, "consoleLink")) {
+			return false;
+		}
 
-			// Check that this is a CodePipeline APPROVAL message
-			if (!_.has(message, "approval") || !_.has(message, "consoleLink")) {
-				return BbPromise.resolve(false);
-			}
-			
-			console.log("  this IS an APPROVAL message");
-			
-			const pipeline = message.approval.pipelineName;
-			const stage = message.approval.stageName;
-			// const action = message.approval.actionName;
-			// const expires = new Date(message.approval.expires);
-			const reviewLink = message.approval.externalEntityLink;
-			const approveLink = message.approval.approvalReviewLink;
-			const customMsg = message.approval.customData;
-			const time = new Date(_.get(event, "Records[0].Sns.Timestamp"));
-			
-			const slackTitle = pipeline + " >> APPROVAL REQUIRED for " + stage;
+		const consoleLink = message.consoleLink;
+		const approval = message.approval;
+		const pipeline = approval.pipelineName;
+		const stage = approval.stageName;
+		const action = approval.actionName;
+		const expires = new Date(approval.expires);
+		const reviewLink = approval.externalEntityLink;
+		const approveLink = approval.approvalReviewLink;
+		const customMsg = approval.customData;
+		const time = new Date(this.getTimestamp());
+		const numHours = Math.floor((expires - time) / 60 / 60);
+		const accountId = this.getAccountId();
 
-			const slackMessage = {
-				attachments: [{
-					fallback: `${pipeline} >> APPROVAL REQUIRED: ${approveLink}`,
-					color: Slack.COLORS.warning,
-					author_name: "AWS CodePipeline :: APPROVAL REQUIRED",
-					title: slackTitle,
-					text: customMsg,
-					fields: [{
-						title: "Review Link",
-						value: reviewLink,
-						short: true
-					}, {
-						title: "Approval Link",
-						value: approveLink,
-						short: true
-					}
-					/*
-					, {
-						title: "Approve By",
-						value: expires,
-						short: true
-					}
-					*/],
-					ts: Slack.toEpochTime(time)
-				}]
-			};
+		let hrs;
+		if (numHours < 0.001) {
+			// expired
+			hrs = `*${Math.ceil(numHours)} ago!*`;
+		}
+		else if (numHours < 1) {
+			// almost expired
+			hrs = `with *${Math.round(numHours*60)} minutes*`;
+		}
+		else {
+			// in X hours
+			hrs = `within ${Math.ceil(numHours)} hours`;
+		}
 
-			return slackMessage;
+		let text = `*APPROVAL REQUIRED* ${hrs} for ${stage}${action}`;
+		if (customMsg) {
+			text += `\n_${text}_`;
+		}
 
-		});
+		return {
+			attachments: [{
+				author_name: `AWS CodePipeline (${accountId})`,
+				title: `${pipeline}`,
+				title_link: consoleLink,
+				text,
+				fallback: `${pipeline} >> APPROVAL REQUIRED: ${approveLink}`,
+				color: Slack.COLORS.warning,
+				mrkdwn: true,
+				ts: Slack.toEpochTime(time),
+				fields: [{
+					title: "Review URL",
+					value: reviewLink,
+					short: true
+				}, {
+					title: "Approval URL",
+					value: approveLink,
+					short: true
+				}
+				/*, {
+					title: "Approve By",
+					value: expires,
+					short: true
+				}*/],
+			}]
+		};
 	}
 }
 

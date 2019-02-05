@@ -6,6 +6,10 @@ RELEASE_ZIP=build/release.zip
 deps:
 	npm install
 
+.PHONY: lambda-update
+lambda-update:
+	@"$(AWS_CLI)" lambda update-function-code --function-name "$(LAMBDA_NAME)" --zip-file "fileb://$(RELEASE_ZIP)" --publish
+
 .PHONY: package
 package:
 	# Prepare
