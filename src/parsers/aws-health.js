@@ -5,7 +5,6 @@ const _ = require("lodash"),
 	Slack = require("../slack");
 
 class AwsHealthParser extends SNSParser {
-
 	handleMessage(message) {
 		if (_.get(message, "source") !== "aws.health") {
 			// Not of interest for us
@@ -72,11 +71,18 @@ class AwsHealthParser extends SNSParser {
 				fallback: text,
 				color: color,
 				title: detailType,
-				text: text,
+				text: this.formatMrkdwn(text),
 				fields: fields,
-				ts: Slack.toEpochTime(new Date(startTime || time))
+				ts: Slack.toEpochTime(new Date(startTime || time)),
+				mrkdwn_in: ["text"]
 			}]
 		};
+	}
+
+	// Format AWS message for Slack mrkdwn
+	formatMrkdwn(text) {
+		// Replace `\\n` with `\n`
+		return text.replace(/\/\/n/gi, '\n')
 	}
 }
 
