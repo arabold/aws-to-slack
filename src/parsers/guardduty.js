@@ -13,24 +13,20 @@ class GuardDutyParser {
 			return false;
 		}
 
-		const id = _.get(event, "id");
-
+		//const id = _.get(event, "id");
 		const title = _.get(event, "title");
 		const description = _.get(event, "description");
 		const createdAt = new Date(_.get(event, "time"));
 		const severity = _.get(event, "severity");
-
 		const accountId = _.get(event, "accountId");
 		const region = _.get(event, "region");
-		const partition = _.get(event, "partition");
-
-		const arn = _.get(event, "arn");
+		//const partition = _.get(event, "partition");
+		//const arn = _.get(event, "arn");
 		const type = _.get(event, "type");
 
 		const threatName = _.get(event, "service.additionalInfo.threatName");
 		const threatListName = _.get(event, "service.additionalInfo.threatListName");
 		const fields = [];
-
 
 		fields.push({
 			title: "Description",
@@ -69,10 +65,9 @@ class GuardDutyParser {
 		});
 
 		const actionType = _.get(event, "service.action.actionType");
-
 		const eventFirstSeen = _.get(event, "service.eventFirstSeen");
 		const eventLastSeen = _.get(event, "service.eventLastSeen");
-		const archived = _.get(event, "service.archived");
+		//const archived = _.get(event, "service.archived");
 		const count = _.get(event, "service.count");
 
 		if (actionType === "PORT_PROBE") {
@@ -246,8 +241,7 @@ class GuardDutyParser {
 			});
 		}
 
-		const color = Slack.COLORS.neutral;
-
+		let color = Slack.COLORS.neutral;
 		if (severity === 1) {
 			color = Slack.COLORS.critical;
 		}
