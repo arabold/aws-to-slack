@@ -59,7 +59,7 @@ class GenericParser extends SNSParser {
 
 		// Serialize the whole event data
 		const fields = this.objectToFields(event);
-		const text = fields ? undefined
+		const text = fields ? []
 			: JSON.stringify(event, null, 2)
 				.replace(/^{\n/, "")
 				.replace(/\n}\n?$/, "");

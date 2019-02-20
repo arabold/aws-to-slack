@@ -70,7 +70,7 @@ test(`Parser[generic] will match event and provide detail`, async () => {
 		"color": "#A8A8A8",
 		"author_name": "<unknown>",
 		"fallback": JSON.stringify(event, null, 2),
-		"text": undefined,
+		"text": [],
 		"title": "Raw Event",
 		"fields": [
 			{"short": true, "title": "test1", "value": "test89"},
