@@ -358,13 +358,21 @@ class AwsCloudWatchChart {
 
 		const datasets = _.map(this.metrics, m =>
 			_.map(timeSlots, timeSlot => {
-				const statName = m.query.Statistics[0];
-				// get relevant numbers only
-				const points = _.map(_.filter(m.datapoints, stat => {
-					// limit to points that appear within this time slice
+				// limit to points that appear within this time slice
+				const datapoints = _.filter(m.datapoints, stat => {
 					const d = +new Date(stat.Timestamp);
 					return d > timeSlot.from && d <= timeSlot.to;
-				}), stat => stat[statName]);
+				});
+
+				if (m.query.ExtendedStatistics) {
+					// Support percentiles
+					const points = _.map(datapoints, stat => stat.ExtendedStatistics[0].value);
+					return _.max(points);
+				}
+
+				const statName = m.query.Statistics[0];
+				// get relevant numbers only
+				const points = _.map(datapoints, stat => stat[statName]);
 
 				switch (statName) {
 				case "Maximum": return _.max(points);
@@ -459,8 +467,20 @@ class AwsCloudWatchChartMetric {
 			_.assign(this, params);
 		}
 
-		// Format for Statistics is {upper-case-letter}{lower-case-word}
-		this.query.Statistics = _.map(this.query.Statistics, s => _.upperFirst(_.toLower(s)));
+		// Support p99 statistics
+		const stats = this.query.Statistics;
+		const percentiles = _.filter(stats, s => /^p\d\d/i.test(s));
+		if (percentiles.length) {
+			if (percentiles.length < stats.length) {
+				throw "Can only use p00.00 -or- normal statistics, not both!";
+			}
+			this.query.ExtendedStatistics = percentiles;
+			delete this.query.Statistics;
+		}
+		else {
+			// Format for Statistics is {upper-case-letter}{lower-case-word}
+			this.query.Statistics = _.map(stats, s => _.upperFirst(_.toLower(s)));
+		}
 	}
 
 	getTitle() {
