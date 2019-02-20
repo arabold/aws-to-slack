@@ -82,7 +82,7 @@ class AwsHealthParser extends SNSParser {
 	// Format AWS message for Slack mrkdwn
 	formatMrkdwn(text) {
 		// Replace `\\n` with `\n`
-		return text.replace(/\/\/n/gi, '\n')
+		return _.replace(text, /\/\/n/gi, "\n");
 	}
 }
 
