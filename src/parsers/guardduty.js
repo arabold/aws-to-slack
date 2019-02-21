@@ -1,19 +1,21 @@
 "use strict";
 
 const _ = require("lodash"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
-class GuardDutyParser {
+class GuardDutyParser extends SNSParser {
 
-	parse(event) {
-		if (!_.isObject(event)) {
-			event = JSON.parse(event);
-		}
-		if (_.get(event, "service.serviceName") !== "guardduty") {
+	handleMessage(message) {
+
+		// Check that this is a Guard Duty message
+		if (!_.has(message, "source") || message.source !== "aws.guardduty") {
 			return false;
 		}
 
-		const id = _.get(event, "id");
+		const event = _.get(message, "detail");
+
+		//const id = _.get(event, "id");
 
 		const title = _.get(event, "title");
 		const description = _.get(event, "description");
@@ -22,9 +24,9 @@ class GuardDutyParser {
 
 		const accountId = _.get(event, "accountId");
 		const region = _.get(event, "region");
-		const partition = _.get(event, "partition");
+		//const partition = _.get(event, "partition");
 
-		const arn = _.get(event, "arn");
+		//const arn = _.get(event, "arn");
 		const type = _.get(event, "type");
 
 		const threatName = _.get(event, "service.additionalInfo.threatName");
@@ -72,7 +74,7 @@ class GuardDutyParser {
 
 		const eventFirstSeen = _.get(event, "service.eventFirstSeen");
 		const eventLastSeen = _.get(event, "service.eventLastSeen");
-		const archived = _.get(event, "service.archived");
+		//const archived = _.get(event, "service.archived");
 		const count = _.get(event, "service.count");
 
 		if (actionType === "PORT_PROBE") {
@@ -158,7 +160,7 @@ class GuardDutyParser {
 			});
 
 			fields.push({
-				title: "Count",
+				title: "Event count",
 				value: count,
 				short: false
 			});
@@ -246,7 +248,7 @@ class GuardDutyParser {
 			});
 		}
 
-		const color = Slack.COLORS.neutral;
+		let color = Slack.COLORS.neutral;
 
 		if (severity === 1) {
 			color = Slack.COLORS.critical;
