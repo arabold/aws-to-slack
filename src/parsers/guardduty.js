@@ -1,17 +1,23 @@
 "use strict";
 
 const _ = require("lodash"),
+	SNSParser = require("./sns"),
 	Slack = require("../slack");
 
-class GuardDutyParser {
+class GuardDutyParser extends SNSParser {
 
-	parse(event) {
-		if (!_.isObject(event)) {
-			event = JSON.parse(event);
-		}
-		if (_.get(event, "service.serviceName") !== "guardduty") {
+	handleMessage(message) {
+
+		// Check that this is a Guard Duty message
+		if (!_.has(message, "source") || message.source !== "aws.guardduty") {
 			return false;
 		}
+		const event = _.get(message, "detail");
+
+		// Alternate check for non-SNS bare messages:
+		//if (_.get(event, "service.serviceName") !== "guardduty") {
+		//	return false;
+		//}
 
 		//const id = _.get(event, "id");
 		const title = _.get(event, "title");
@@ -153,7 +159,7 @@ class GuardDutyParser {
 			});
 
 			fields.push({
-				title: "Count",
+				title: "Event count",
 				value: count,
 				short: false
 			});
