@@ -267,11 +267,18 @@ class AwsCloudWatchChart {
 	getTimeSlots() {
 		let toTime = 0;
 		let fromTime = +new Date();
+		let hasDataPoints = false;
 		_.each(this.metrics, m => {
-			const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
-			toTime = Math.max(_.max(dates), toTime);
-			fromTime = Math.min(_.min(dates), fromTime);
+			if (m.datapoints.length) {
+				hasDataPoints = true;
+				const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
+				toTime = Math.max(_.max(dates), toTime);
+				fromTime = Math.min(_.min(dates), fromTime);
+			}
 		});
+		if (!hasDataPoints) {
+			throw "No datapoints returned from CloudWatch, cannot render empty chart";
+		}
 		if (!fromTime || !toTime) {
 			throw "Cannot render a chart without timeframe";
 		}
