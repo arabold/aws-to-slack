@@ -67,8 +67,8 @@ create-stack: create-stack-raw
 # Update CloudFormation stack
 .PHONY: update-stack
 update-stack:
-    aws cloudformation update-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
-    		$(regionArg) --capabilities CAPABILITY_IAM --parameters $(STACK_PARAMS)
+	aws cloudformation update-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
+			$(regionArg) --capabilities CAPABILITY_IAM --parameters $(STACK_PARAMS)
 
 
 # Perform describe-stack to retrieve name of Lambda function
