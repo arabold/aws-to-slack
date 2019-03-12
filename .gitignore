@@ -3,3 +3,5 @@ sample-data
 .temp
 .DS_Store
 .idea/*
+*.env
+release.zip

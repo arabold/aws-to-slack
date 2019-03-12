@@ -150,3 +150,8 @@ Resources:
       TopicArn: !Ref FunctionFailingTopic
       Protocol: email
       Endpoint: !Ref ErrorAlertEmail
+
+Outputs:
+  LambdaFunction:
+    Description: 'Lambda function name created by this stack.'
+    Value: !Ref Function
