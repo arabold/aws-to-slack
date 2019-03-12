@@ -15,25 +15,26 @@ class CodeBuildParser {
 		const buildStatus = _.get(event, "detail.build-status");
 		const project = _.get(event, "detail.project-name");
 		const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${event.region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
-		const projectUrl = `https://console.aws.amazon.com/codebuild/home?region=${event.region}#/projects/${project}/view`;
+		const buildId = _.split(_.get(event, "detail.build-id"), ":").pop();
+		const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${event.region}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
 		const fields = [];
 
 		let color = Slack.COLORS.neutral;
 		let title = project;
 		if (buildStatus === "SUCCEEDED") {
-			title = `<${projectUrl}|${project}> has finished building`;
+			title = `<${buildUrl}|${project}> has finished building`;
 			color = Slack.COLORS.ok;
 		}
 		else if (buildStatus === "STOPPED") {
-			title = `<${projectUrl}|${project}> was stopped`;
+			title = `<${buildUrl}|${project}> was stopped`;
 			color = Slack.COLORS.warning;
 		}
 		else if (buildStatus === "FAILED") {
-			title = `<${projectUrl}|${project}> has failed to build`;
+			title = `<${buildUrl}|${project}> has failed to build`;
 			color = Slack.COLORS.critical;
 		}
 		else if (buildStatus === "IN_PROGRESS") {
-			title = `<${projectUrl}|${project}> has started building`;
+			title = `<${buildUrl}|${project}> has started building`;
 		}
 
 		if (buildStatus) {
