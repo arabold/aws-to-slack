@@ -141,13 +141,19 @@ class AwsCloudWatchChart {
 			throw new Error("config parameter is missing");
 		}
 
-		this.cloudwatch = new AWS.CloudWatch();
-		this.metrics = [];
+		this.region = _.get(config, "region");
 		this.timeOffset = _.get(config, "timeOffset", 24 * 60 * 60);
 		this.timePeriod = _.get(config, "timePeriod", 60);
 		this.chartSamples = _.get(config, "chartSamples", 24);
 		this.width = _.get(config, "width", 1000);
 		this.height = _.get(config, "height", 250);
+		this.metrics = [];
+
+		const clientOpt = {};
+		if (this.region) {
+			clientOpt.region = this.region;
+		}
+		this.cloudwatch = new AWS.CloudWatch(clientOpt);
 
 		if (config.metrics) {
 			for (const k in config.metrics) {
@@ -219,7 +225,11 @@ class AwsCloudWatchChart {
 			metricNamespace: query.Namespace,
 			limit: 1,
 		};
-		const cloudwatchlogs = new AWS.CloudWatchLogs();
+		const clientOpt = {};
+		if (this.region) {
+			clientOpt.region = this.region;
+		}
+		const cloudwatchlogs = new AWS.CloudWatchLogs(clientOpt);
 		const result = await cloudwatchlogs.describeMetricFilters(params).promise();
 		return _.get(result, "metricFilters[0]");
 	}

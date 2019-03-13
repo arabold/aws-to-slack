@@ -43,7 +43,6 @@ class CloudWatchParser extends SNSParser {
 			const chart = await this.getChart(message);
 			logsUrl = chart.getCloudWatchURL(this.getTimestamp(), region);
 			image_url = chart.getURL(message);
-
 		}
 		catch (err) {
 			console.log("Error rendering chart:", err);
@@ -98,7 +97,11 @@ class CloudWatchParser extends SNSParser {
 			metric.threshold = parseFloat(thresh[1]);
 		}
 
-		await Chart.configureAwsSdk();
+		if (!process.env.LAMBDA_TASK_ROOT) {
+			// For local testing, client might require explicit configuration
+			await Chart.configureAwsSdk();
+		}
+
 		const chart = new Chart({
 			metrics: [metric],
 			timeOffset: 24*60*60, // Get statistic for last 24 hours
@@ -106,10 +109,40 @@ class CloudWatchParser extends SNSParser {
 			chartSamples: 144, // Data points extrapolated on chart (1 per 10min)
 			width: 500,
 			height: 220,
+
+			// NOTE: flow is CloudWatch >> SNS >> Lambda. Each step can be in a different region!
+			//   We want region of CloudWatch! So map the regionName to ID, fallback to region of the SNS.
+			region: regionNameToId[message.Region] || this.getRegion(),
 		});
 		await chart.load();
 		return chart;
 	}
 }
+
+const regionNameToId = {
+	// Copied from https://docs.aws.amazon.com/general/latest/gr/rande.html
+	"US East (Ohio)": "us-east-2",
+	"US East (N. Virginia)": "us-east-1",
+	"US West (N. California)": "us-west-1",
+	"US West (Oregon)": "us-west-2",
+	"Asia Pacific (Mumbai)": "ap-south-1",
+	"Asia Pacific (Osaka-Local)": "ap-northeast-3",
+	"Asia Pacific (Seoul)": "ap-northeast-2",
+	"Asia Pacific (Singapore)": "ap-southeast-1",
+	"Asia Pacific (Sydney)": "ap-southeast-2",
+	"Asia Pacific (Tokyo)": "ap-northeast-1",
+	"Canada (Central)": "ca-central-1",
+	"China (Beijing)": "cn-north-1",
+	"China (Ningxia)": "cn-northwest-1",
+	"EU (Frankfurt)": "eu-central-1",
+	"EU (Ireland)": "eu-west-1",
+	"EU (London)": "eu-west-2",
+	"EU (Paris)": "eu-west-3",
+	"EU (Stockholm)": "eu-north-1",
+	"South America (São Paulo)": "sa-east-1",
+	"South America (Sao Paulo)": "sa-east-1",
+	"AWS GovCloud (US-East)": "us-gov-east-1",
+	"AWS GovCloud (US)": "us-gov-west-1",
+};
 
 module.exports = CloudWatchParser;
