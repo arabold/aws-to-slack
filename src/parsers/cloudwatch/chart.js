@@ -52,7 +52,7 @@
 				},
 			}
 		],
-		"timeOffset": 1440,		// Get statistic for last 1440 minutes
+		"timeOffset": 24*60*60,	// Get statistic for last 24 hours
 		"timePeriod": 60,		// Get statistic for each 60 seconds
 		"chartSamples": 20,		// Data points extrapolated on chart
 		"width": 1000,			// Result image width. Maximum value for width or height is 1,000. Width x height cannot exceed 300,000.
@@ -143,7 +143,7 @@ class AwsCloudWatchChart {
 
 		this.cloudwatch = new AWS.CloudWatch();
 		this.metrics = [];
-		this.timeOffset = _.get(config, "timeOffset", 24 * 60);
+		this.timeOffset = _.get(config, "timeOffset", 24 * 60 * 60);
 		this.timePeriod = _.get(config, "timePeriod", 60);
 		this.chartSamples = _.get(config, "chartSamples", 24);
 		this.width = _.get(config, "width", 1000);
@@ -179,12 +179,12 @@ class AwsCloudWatchChart {
 		const toTime = new Date();
 		const fromTime = new Date();
 
-		fromTime.setTime(toTime.getTime() - this.timeOffset * 60 * 1000);
+		fromTime.setTime(toTime.getTime() - this.timeOffset * 1000);
 
 		query = _.assign({
 			EndTime: toTime,
 			StartTime: fromTime,
-			Period: this.timePeriod,
+			Period: this.timePeriod, // in seconds
 		}, query);
 
 		const result = await this.cloudwatch.getMetricStatistics(query).promise();

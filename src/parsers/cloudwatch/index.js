@@ -100,9 +100,9 @@ class CloudWatchParser extends SNSParser {
 		await Chart.configureAwsSdk();
 		const chart = new Chart({
 			metrics: [metric],
-			timeOffset: 1440,  // Get statistic for last 1440 minutes
+			timeOffset: 24*60*60, // Get statistic for last 24 hours
 			timePeriod: 60,    // Get statistic for each 60 seconds
-			chartSamples: 144, // Data points extrapolated on chart
+			chartSamples: 144, // Data points extrapolated on chart (1 per 10min)
 			width: 500,
 			height: 220,
 		});
