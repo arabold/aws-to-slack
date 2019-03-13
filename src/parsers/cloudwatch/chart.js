@@ -188,6 +188,10 @@ class AwsCloudWatchChart {
 		}, query);
 
 		const result = await this.cloudwatch.getMetricStatistics(query).promise();
+
+		if (!result.Datapoints.length) {
+			console.log("CloudWatch.getMetricStatics resulted in no datapoints:", JSON.stringify(query));
+		}
 		return result.Datapoints;
 	}
 
