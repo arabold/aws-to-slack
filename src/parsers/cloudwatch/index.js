@@ -83,6 +83,7 @@ class CloudWatchParser extends SNSParser {
 			color: "af9cf4",
 			thickness: 2,
 			dashed: false,
+			threshold: trigger.Threshold,
 			query: {
 				Namespace: trigger.Namespace,
 				MetricName: trigger.MetricName,
