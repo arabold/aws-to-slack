@@ -99,9 +99,11 @@ class AwsCloudWatchChart {
 	static configureAwsSdk(config) {
 		return new Promise((resolve, reject) => {
 			config = config || {};
-			AWS.config.update({
-				region: config.region || "us-east-1",
-			});
+			if (config.region) {
+				AWS.config.update({
+					region: config.region || "us-east-1",
+				});
+			}
 
 			if (config.accessKeyId && config.secretAccessKey) {
 				AWS.config.update({
