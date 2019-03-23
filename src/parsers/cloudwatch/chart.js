@@ -149,7 +149,10 @@ class AwsCloudWatchChart {
 		this.height = _.get(config, "height", 250);
 		this.metrics = [];
 
-		const clientOpt = {};
+		const clientOpt = {
+			// Cross-region lookups requires at least 10s
+			httpOptions: { timeout: 10000 },
+		};
 		if (this.region) {
 			clientOpt.region = this.region;
 		}
@@ -225,7 +228,9 @@ class AwsCloudWatchChart {
 			metricNamespace: query.Namespace,
 			limit: 1,
 		};
-		const clientOpt = {};
+		const clientOpt = {
+			httpOptions: { timeout: 10000 },
+		};
 		if (this.region) {
 			clientOpt.region = this.region;
 		}
