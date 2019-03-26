@@ -39,7 +39,7 @@ package:
 	@cd "$(TEMP_PATH)" && npm install --production
 
 	# Package artifact
-	@cd "$(TEMP_PATH)" && zip -r "../$(RELEASE_ZIP)" .
+	@cd "$(TEMP_PATH)" && zip -rq "../$(RELEASE_ZIP)" .
 
 	# Cleanup
 	@rm -r "$(TEMP_PATH)"
