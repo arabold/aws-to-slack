@@ -153,6 +153,7 @@ function postJson(data, endpoint) {
 			"Content-Type": "application/json",
 			"Content-Length": Buffer.byteLength(body),
 		};
+		options.timeout = 3500;
 
 		const postReq = https.request(options, res => {
 			const chunks = [];
