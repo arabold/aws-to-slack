@@ -322,7 +322,7 @@ class AwsCloudWatchChart {
 	/**
 	 * Generate a link to CloudWatch page filtering on logs for the given metric.
 	 *
-	 * @param {number|string} timestamp Time of message
+	 * @param {number|string|Date} timestamp Time of message
 	 * @param {string} [region] Region to set in link
 	 * @returns {string} The URL
 	 */
@@ -335,7 +335,7 @@ class AwsCloudWatchChart {
 		const { filterPattern, logGroupName } = filterDef;
 
 		// Generates start and end time ISO strings one hour before to one hour after the supplied timestamp
-		const eventTime = new Date(timestamp);
+		const eventTime = _.isDate(timestamp) ? timestamp : new Date(timestamp);
 		eventTime.setUTCMinutes(0);
 		eventTime.setUTCSeconds(0);
 		eventTime.setUTCMilliseconds(0);

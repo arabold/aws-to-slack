@@ -1,7 +1,8 @@
 /* global expect, test, jest */
 /* eslint lodash/prefer-lodash-typecheck:0 lodash/prefer-lodash-method:0 */
 
-const Handler = require("../../src/index");
+const Handler = require("../../src/index")
+	, EventDef = require("../../src/eventdef");
 
 /**
  * Helper class for creating tests around event parsing.
@@ -74,7 +75,8 @@ class ParserMock {
 	 */
 	makeNew() {
 		const parser = require(`../../src/parsers/${this.name}`);
-		return new parser();
+		parser.name = this.name;
+		return parser;
 	}
 
 	/**
@@ -87,30 +89,37 @@ class ParserMock {
 		describe(`Parser-Mock: ${this.name}`, () => {
 			test("parser exists", () => {
 				const parser = require(`../../src/parsers/${this.name}`);
-				expect(parser).toEqual(expect.any(Function));
-				expect(parser.prototype)
-					.toEqual(expect.objectContaining({ parse: expect.any(Function) }));
+				expect(parser).toEqual(expect.objectContaining({
+					parse: expect.any(Function),
+					matches: expect.any(Function),
+				}));
 			});
 
 			test("parser.parse() is called", async () => {
 				const parser = require(`../../src/parsers/${this.name}`);
 				const handle = new Handler();
 				expect(handle.parsers).toContain(parser);
+				const idx = handle.parsers.indexOf(parser);
 
+				const mockMatchFn = jest.fn().mockImplementation(() => true);
 				const mockParseFn = jest.fn().mockImplementation(() => false);
-				const mockParser = jest.fn().mockImplementation(() => {
-					return { parse: mockParseFn };
+				const origParser = handle.parsers[idx];
+				handle.parsers[idx] = Object.assign({}, origParser, {
+					matches: mockMatchFn,
+					parse: mockParseFn,
 				});
-				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
 
-				await handle.processEvent(event);
-				expect(mockParser).toHaveBeenCalledTimes(1);
+				const eventDef = new EventDef(event);
+				await handle.processEvent(eventDef);
+				expect(mockMatchFn).toHaveBeenCalledTimes(1);
+				expect(mockMatchFn).toHaveBeenCalledWith(eventDef);
 				expect(mockParseFn).toHaveBeenCalledTimes(1);
-				expect(mockParseFn).toHaveBeenCalledWith(event);
+				expect(mockParseFn).toHaveBeenCalledWith(eventDef);
 			});
 
 			test("parser will match event", async () => {
-				const msg = await this.makeNew().parse(event);
+				const eventDef = new EventDef(event);
+				const msg = await this.makeNew().parse(eventDef);
 				expect(msg).toBeTruthy();
 				// Confirm basic response structure
 				//TODO: this is pretty restrictive, what if parsers create fancy events?
@@ -122,18 +131,25 @@ class ParserMock {
 			});
 
 			test("parser is selected by Lambda handler", async () => {
-				const msg = await this.makeNew().parse(event);
-				const h = await new Handler().processEvent(event);
-				expect(h).toEqual(expect.objectContaining({
-					name: this.name,
-					slackMessage: expect.any(Object),
-				}));
-				expect(h.name).toEqual(this.name);
+				const eventDef = new EventDef(event);
+				const msg = await this.makeNew().parse(eventDef);
+				const h = await new Handler().processEvent(eventDef);
+				expect(h.parserName).toEqual(this.name);
 				expect(h.slackMessage).toEqual(expect.objectContaining(msg));
 			});
 		});
 
 		return this;
+	}
+
+	matchesEventWithDetail(event, detail) {
+		describe(`Parser-Mock: ${this.name}`, () => {
+			test("matches event with detail", async () => {
+				const eventDef = new EventDef(event);
+				const result = await this.makeNew().parse(eventDef);
+				expect(result.attachments[0]).toMatchObject(detail);
+			});
+		});
 	}
 
 	/**
@@ -157,7 +173,8 @@ class ParserMock {
 	doesNotMatchEvent(event) {
 		describe(`Parser-Mock: ${this.name}`, () => {
 			test("parser will NOT match event", async () => {
-				const msg = await this.makeNew().parse(event);
+				const eventDef = new EventDef(event);
+				const msg = await this.makeNew().parse(eventDef);
 				expect(msg).toBeFalsy();
 			});
 
@@ -165,22 +182,28 @@ class ParserMock {
 				const parser = require(`../../src/parsers/${this.name}`);
 				const handle = new Handler();
 				expect(handle.parsers).toContain(parser);
+				const idx = handle.parsers.indexOf(parser);
 
+				const mockMatchFn = jest.fn().mockImplementation(() => true);
 				const mockParseFn = jest.fn().mockImplementation(() => false);
-				const mockParser = jest.fn().mockImplementation(() => {
-					return { parse: mockParseFn };
+				const origParser = handle.parsers[idx];
+				handle.parsers[idx] = Object.assign({}, origParser, {
+					matches: mockMatchFn,
+					parse: mockParseFn,
 				});
-				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
 
-				await handle.processEvent(event);
-				expect(mockParser).toHaveBeenCalledTimes(1);
+				const eventDef = new EventDef(event);
+				await handle.processEvent(eventDef);
+				expect(mockMatchFn).toHaveBeenCalledTimes(1);
+				expect(mockMatchFn).toHaveBeenCalledWith(eventDef);
 				expect(mockParseFn).toHaveBeenCalledTimes(1);
-				expect(mockParseFn).toHaveBeenCalledWith(event);
+				expect(mockParseFn).toHaveBeenCalledWith(eventDef);
 			});
 
 			test("parser is NOT selected by Lambda handler", async () => {
-				const msg = await this.makeNew().parse(event);
-				const h = await new Handler().processEvent(event);
+				const eventDef = new EventDef(event);
+				const msg = await this.makeNew().parse(eventDef);
+				const h = await new Handler().processEvent(eventDef);
 				expect(h).not.toEqual(msg);
 				if (h) {
 					expect(h.name).not.toEqual(this.name);
@@ -212,7 +235,8 @@ class ParserMock {
 	willStopHandlerWithEvent(event) {
 		describe(`Parser-Mock: ${this.name}`, () => {
 			test("parser matches event with truthy/empty object response", async () => {
-				const msg = await this.makeNew().parse(event);
+				const eventDef = new EventDef(event);
+				const msg = await this.makeNew().parse(eventDef);
 				expect(msg).toBeTruthy();
 				if (msg !== true) {
 					expect(msg).toEqual({});
@@ -223,21 +247,27 @@ class ParserMock {
 				const parser = require(`../../src/parsers/${this.name}`);
 				const handle = new Handler();
 				expect(handle.parsers).toContain(parser);
+				const idx = handle.parsers.indexOf(parser);
 
+				const mockMatchFn = jest.fn().mockImplementation(() => true);
 				const mockParseFn = jest.fn().mockImplementation(() => false);
-				const mockParser = jest.fn().mockImplementation(() => {
-					return { parse: mockParseFn };
+				const origParser = handle.parsers[idx];
+				handle.parsers[idx] = Object.assign({}, origParser, {
+					matches: mockMatchFn,
+					parse: mockParseFn,
 				});
-				handle.parsers[handle.parsers.indexOf(parser)] = mockParser;
 
-				await handle.processEvent(event);
-				expect(mockParser).toHaveBeenCalledTimes(1);
+				const eventDef = new EventDef(event);
+				await handle.processEvent(eventDef);
+				expect(mockMatchFn).toHaveBeenCalledTimes(1);
+				expect(mockMatchFn).toHaveBeenCalledWith(eventDef);
 				expect(mockParseFn).toHaveBeenCalledTimes(1);
-				expect(mockParseFn).toHaveBeenCalledWith(event);
+				expect(mockParseFn).toHaveBeenCalledWith(eventDef);
 			});
 
 			test("parser forces Lambda handler to return null", async () => {
-				const h = await new Handler().processEvent(event);
+				const eventDef = new EventDef(event);
+				const h = await new Handler().processEvent(eventDef);
 				expect(h).toEqual(null);
 			});
 		});

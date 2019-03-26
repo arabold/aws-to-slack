@@ -1,49 +1,42 @@
-"use strict";
+const _ = require("lodash");
 
-const _ = require("lodash"),
-	Slack = require("../../slack");
+module.exports = {
 
-class CodeCommitPullRequestParser {
+	// CodeCommit: Pull Request
+	matches: event =>
+		event.getSource() === "codecommit"
+		&& _.get(event.message, "detail-type") === "CodeCommit Pull Request State Change",
 
-	parse(event) {
-		if (_.get(event, "source") !== "aws.codecommit") {
-			return false;
-		}
-
-		if (_.get(event, "detail-type") !== "CodeCommit Pull Request State Change") {
-			// Not of interest for us
-			return false;
-		}
-
-		const time = new Date(_.get(event, "time"));
-		const repoName = _.get(event, "detail.repositoryNames[0]");
-		const callerArn = _.get(event, "detail.callerUserArn");
-		const pullRequestId = _.get(event, "detail.pullRequestId");
-		const pullRequestEvent = _.get(event, "detail.event");
-		const pullRequestMerged = _.get(event, "detail.isMerged");
-		const pullRequestStatus = _.get(event, "detail.pullRequestStatus");
-		const pullRequestTitle = _.get(event, "detail.title");
-		const pullRequestUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.region}#/repository/${repoName}/pull-request/${pullRequestId}`;
+	parse: event => {
+		const message = event.message;
+		const callerArn = _.get(message, "detail.callerUserArn");
+		const repoName = _.get(message, "detail.repositoryNames[0]");
+		const pullRequestId = _.get(message, "detail.pullRequestId");
+		const pullRequestEvent = _.get(message, "detail.event");
+		const pullRequestMerged = _.get(message, "detail.isMerged");
+		const pullRequestStatus = _.get(message, "detail.pullRequestStatus");
+		const pullRequestTitle = _.get(message, "detail.title");
+		const pullRequestUrl = `https://console.aws.amazon.com/codecommit/home?region=${message.region}#/repository/${repoName}/pull-request/${pullRequestId}`;
 		const fields = [];
 
-		let color = Slack.COLORS.neutral;
+		let color = event.COLORS.neutral;
 		const baseTitle = `Pull Request #${pullRequestId}`;
 		let title = baseTitle;
 		if (pullRequestEvent === "pullRequestMergeStatusUpdated" && pullRequestStatus === "Closed" && pullRequestMerged === "True") {
 			title = `${baseTitle} was merged`;
-			color = Slack.COLORS.accent;
+			color = event.COLORS.accent;
 		}
 		else if (pullRequestEvent === "pullRequestStatusChanged" && pullRequestStatus === "Closed" && pullRequestMerged === "False") {
 			title = `${baseTitle} was closed`;
-			color = Slack.COLORS.critical;
+			color = event.COLORS.critical;
 		}
 		else if (pullRequestEvent === "pullRequestCreated") {
 			title = `${baseTitle} was opened`;
-			color = Slack.COLORS.ok;
+			color = event.COLORS.ok;
 		}
 		else if (pullRequestEvent === "pullRequestSourceBranchUpdated") {
 			title = `${baseTitle} source branch was updated`;
-			color = Slack.COLORS.warning;
+			color = event.COLORS.warning;
 		}
 
 		if (repoName) {
@@ -69,19 +62,14 @@ class CodeCommitPullRequestParser {
 			});
 		}
 
-		return {
-			attachments: [{
-				author_name: "AWS CodeCommit",
-				fallback: `${repoName}: ${title}`,
-				color: color,
-				title: title,
-				title_link: pullRequestUrl,
-				fields: fields,
-				mrkdwn_in: [ "title", "text" ],
-				ts: Slack.toEpochTime(time)
-			}]
-		};
+		return event.attachmentWithDefaults({
+			author_name: "AWS CodeCommit",
+			fallback: `${repoName}: ${title}`,
+			color: color,
+			title: title,
+			title_link: pullRequestUrl,
+			fields: fields,
+			mrkdwn_in: ["title", "text"],
+		});
 	}
-}
-
-module.exports = CodeCommitPullRequestParser;
+};

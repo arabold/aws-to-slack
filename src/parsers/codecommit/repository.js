@@ -1,30 +1,22 @@
-"use strict";
+const _ = require("lodash");
 
-const _ = require("lodash"),
-	Slack = require("../../slack");
+module.exports = {
 
-class CodeCommitRepositoryParser {
+	// CodeCommit: Repo Change
+	matches: event => event.getSource() === "codecommit"
+		&& _.get(event.message, "detail-type") === "CodeCommit Repository State Change",
 
-	parse(event) {
-		if (_.get(event, "source") !== "aws.codecommit") {
-			return false;
-		}
-
-		if (_.get(event, "detail-type") !== "CodeCommit Repository State Change") {
-			// Not of interest for us
-			return false;
-		}
-
-		const time = new Date(_.get(event, "time"));
-		const callerArn = _.get(event, "detail.callerUserArn");
-		const refName = _.get(event, "detail.referenceName");
-		const refType = _.get(event, "detail.referenceType");
-		const repoName = _.get(event, "detail.repositoryName");
-		const repoEvent = _.get(event, "detail.event");
-		const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.region}#/repository/${repoName}`;
+	parse: event => {
+		const message = event.message;
+		const callerArn = _.get(message, "detail.callerUserArn");
+		const refName = _.get(message, "detail.referenceName");
+		const refType = _.get(message, "detail.referenceType");
+		const repoName = _.get(message, "detail.repositoryName");
+		const repoEvent = _.get(message, "detail.event");
+		const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${message.region}#/repository/${repoName}`;
 		const fields = [];
 
-		const color = Slack.COLORS.neutral;
+		const color = event.COLORS.neutral;
 		let title = repoName;
 		if (repoEvent === "referenceCreated" && refType === "branch") {
 			title = `New branch created in repository ${repoName}`;
@@ -68,19 +60,14 @@ class CodeCommitRepositoryParser {
 			});
 		}
 
-		return {
-			attachments: [{
-				author_name: "AWS CodeCommit",
-				fallback: `${repoName}: ${title}`,
-				color: color,
-				title: title,
-				title_link: repoUrl,
-				fields: fields,
-				mrkdwn_in: ["title", "text"],
-				ts: Slack.toEpochTime(time)
-			}]
-		};
-	}
-}
-
-module.exports = CodeCommitRepositoryParser;
+		return event.attachmentWithDefaults({
+			author_name: "AWS CodeCommit",
+			fallback: `${repoName}: ${title}`,
+			color: color,
+			title: title,
+			title_link: repoUrl,
+			fields: fields,
+			mrkdwn_in: ["title", "text"],
+		});
+	},
+};

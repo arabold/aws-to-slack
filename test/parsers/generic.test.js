@@ -55,7 +55,8 @@ const eventThatMatchesNothing = {
 };
 
 
-const mock = require("./_parser_mock").named("generic");
+const mock = require("./_parser_mock").named("generic")
+	, EventDef = require("../../src/eventdef");
 mock.matchesEvent(snsMessageThatMatchesNothing);
 mock.matchesEvent(eventThatMatchesNothing);
 
@@ -64,13 +65,13 @@ test(`Parser[generic] will match event and provide detail`, async () => {
 		test1: "test89",
 		test8: 7,
 	};
-	const result = await mock.makeNew().parse(event);
+	const result = await mock.makeNew().parse(new EventDef(event));
 	expect(result.attachments[0]).toEqual(expect.objectContaining({
 		"ts": expect.any(Number),
 		"color": "#A8A8A8",
 		"author_name": "<unknown>",
 		"fallback": JSON.stringify(event, null, 2),
-		"text": [],
+		"text": "",
 		"title": "Raw Event",
 		"fields": [
 			{"short": true, "title": "test1", "value": "test89"},

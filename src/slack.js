@@ -1,5 +1,3 @@
-"use strict";
-
 const url = require("url")
 	, https = require("https")
 	, AWS = require("aws-sdk")

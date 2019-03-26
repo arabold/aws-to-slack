@@ -1,25 +1,20 @@
-"use strict";
+//
+// AWS Auto-Scaling event parser
+//
+const _ = require("lodash");
 
-const _ = require("lodash"),
-	SNSParser = require("./sns"),
-	Slack = require("../slack");
+module.exports = {
 
-class AutoScalingParser extends SNSParser {
+	matches: event => _.has(event.message, "AutoScalingGroupARN"),
 
-	handleMessage(message) {
-		if (!_.has(message, "AutoScalingGroupARN")) {
-			// Not of interest for us
-			return false;
-		}
-
-		// AWS Health Dashboard Message
+	parse: event => {
+		const message = event.message;
 		const accountId = _.get(message, "AccountId");
 		//const requestId = _.get(message, "RequestId");
 		const arn = _.get(message, "AutoScalingGroupARN");
 		const groupName = _.get(message, "AutoScalingGroupName");
 		const service = _.get(message, "Service");
 		const eventName = _.get(message, "Event");
-		const time = _.get(message, "Time");
 
 		// Example ARN: arn:aws:autoscaling:{region}:{accountId}:autoScalingGroup:{group-id}:autoScalingGroupName/{group-name}
 		const arnParts = _.split(arn, ":");
@@ -33,28 +28,23 @@ class AutoScalingParser extends SNSParser {
 
 		const text = `Auto Scaling triggered ${eventName} for service ${service}.`;
 
-		return {
-			attachments: [{
-				author_name: `AWS AutoScaling (${region} - ${accountId})`,
-				author_link: signInLink,
-				title: `${groupName} - ${eventName}`,
-				title_link: consoleLink,
-				text,
-				fallback: text,
-				color: Slack.COLORS.neutral,
-				ts: Slack.toEpochTime(time ? new Date(time) : new Date()),
-				fields: [{
-					title: "Service",
-					value: service,
-					short: true,
-				}, {
-					title: "Event",
-					value: eventName,
-					short: true,
-				}]
+		return event.attachmentWithDefaults({
+			author_name: `AWS AutoScaling (${region} - ${accountId})`,
+			author_link: signInLink,
+			title: `${groupName} - ${eventName}`,
+			title_link: consoleLink,
+			text,
+			fallback: text,
+			color: event.COLORS.neutral,
+			fields: [{
+				title: "Service",
+				value: service,
+				short: true,
+			}, {
+				title: "Event",
+				value: eventName,
+				short: true,
 			}]
-		};
+		});
 	}
-}
-
-module.exports = AutoScalingParser;
+};
