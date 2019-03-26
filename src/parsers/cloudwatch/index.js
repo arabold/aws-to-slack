@@ -1,6 +1,3 @@
-const _ = require("lodash")
-	, Chart = require("./chart");
-
 //
 // CloudWatch Metric Alarm
 //
@@ -82,7 +79,7 @@ async function getChart(event) {
 		query: {
 			Namespace: trigger.Namespace,
 			MetricName: trigger.MetricName,
-			Dimensions: _.map(trigger.Dimensions, d => ({Name: d.name, Value: d.value})),
+			Dimensions: _.map(trigger.Dimensions, d => ({ Name: d.name, Value: d.value })),
 			Statistics: [_.upperFirst(_.toLower(trigger.Statistic))],
 			Unit: trigger.Unit,
 		},
@@ -93,6 +90,7 @@ async function getChart(event) {
 		metric.threshold = parseFloat(thresh[1]);
 	}
 
+	const Chart = require("./chart");
 	if (!process.env.LAMBDA_TASK_ROOT) {
 		// For local testing, client might require explicit configuration
 		await Chart.configureAwsSdk();
