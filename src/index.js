@@ -51,8 +51,9 @@ class LambdaHandler {
 		}
 		if (matchingParsers.length > 2) {
 			// [0] => custom parser
-			// [1] => generic parser
-			console.log("Multiple Parsers matched, using first:", _.map(matchingParsers, p => p.name));
+			// [1] => custom parser <<< this is the problem!
+			// [2] => generic parser
+			console.log("Multiple Parsers matched (using first):", _.map(matchingParsers, p => p.name));
 		}
 
 		// Execute all parsers and use the first successful result
