@@ -36,13 +36,15 @@ Supported AWS product notification formats:
 * Generic SNS messages
 * Plain text messages
 
-Additional formats will be added; Pull Requests are welcome!
+Additional formats will be added. Pull Requests are welcome!
 
 ## Try!
 Ready to try it for yourself? Installation into your own AWS environment is as
 simple as pressing the button below (for installation outside of `us-east-1` see details below):
 
-[![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-east-1/cloudformation.yaml) 
+**THIS LINK DOES NOT MATCH MASTER BRANCH!** We have been adding more event types and fixing bugs, but this link uses an old template. Pending a 2.0 release, please manually create a CloudFormation stack by **uploading the `cloudformation.yaml` from master branch!**
+
+> [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-east-1/cloudformation.yaml)
 
 ## Installation
 
@@ -157,12 +159,11 @@ some ideas how to contribute and a list of open tasks. There're plenty of
 notification formats that still need to be supported.
 
 The repository comes with a very simple `Makefile` to build the CloudFormation
-stack yourself. Simply run
+stack yourself. 
 
 ```bash
-make deps
 make package
 ```
 
-To generate a new `release.zip` in the `build` folder. Upload this zip to your
-AWS Lambda function and you're good to go.
+This generates a new `release.zip` in the root folder. Upload this zip to your
+AWS Lambda function and you're good to go. Make sure to check out [Managing Multiple Deployments](#managing-multiple-deployments) for a more scalable solution to deploys.
