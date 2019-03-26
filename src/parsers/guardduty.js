@@ -1,10 +1,8 @@
 //
 // AWS GuardDuty event parser
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
-	_.get(event.getSource(), "source") === "guardduty"
+	event.getSource() === "guardduty"
 	|| _.get(event.message, "detail.service.serviceName") === "guardduty";
 
 module.exports.parse = event => {

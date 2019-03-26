@@ -1,9 +1,8 @@
 //
 // AWS Batch event parser
 //
-const _ = require("lodash");
-
-module.exports.matches = event => event.getSource() === "batch";
+module.exports.matches = event =>
+	event.getSource() === "batch";
 
 module.exports.parse = event => {
 	const message = event.message;

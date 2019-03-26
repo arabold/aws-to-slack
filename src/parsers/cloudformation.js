@@ -1,8 +1,6 @@
 //
 // AWS CloudFormation event parser
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	// Will only match SNS messages
 	_.startsWith(event.getSubject(), "AWS CloudFormation Notification");

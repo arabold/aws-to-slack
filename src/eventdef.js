@@ -1,5 +1,10 @@
 const _ = require("lodash");
 
+// Init Lodash as a global
+// EventDef is a requirement for running a parser, so it's more appropriate
+// to put this here instead of within index.js.
+global._ = _;
+
 /**
  * Event abstraction to help with Lambda and SNS un-wrapping.
  */

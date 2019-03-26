@@ -1,8 +1,9 @@
-/* eslint lodash/prefer-lodash-method:0 */
-const _ = require("lodash");
-
-// Match every event
-module.exports.matches = () => true;
+//
+// Generic event parser
+// Should safely be able to parse ANY kind of message and generate a Slack Message containing
+// the contents of that structure.
+//
+module.exports.matches = () => true; // Match every event
 
 module.exports.parse = event => {
 	// Clone object so we can delete known keys
@@ -43,6 +44,7 @@ module.exports.parse = event => {
 		// Serialize the whole event data
 		fields = objectToFields(message);
 		text = fields ? ""
+		// eslint-disable-next-line lodash/prefer-lodash-method
 			: JSON.stringify(message, null, 2)
 				.replace(/^{\n/, "")
 				.replace(/\n}\n?$/, "");

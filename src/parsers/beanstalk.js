@@ -1,8 +1,6 @@
 //
 // AWS Elastic Beanstalk event parser
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	// Will only match SNS messages
 	_.startsWith(event.getSubject(), "AWS Elastic Beanstalk Notification");
@@ -14,7 +12,7 @@ module.exports.parse = event => {
 		if (!_.isEmpty(line) && _.includes(line, ":")) {
 			const key = _.trim(line.substr(0, line.indexOf(":")));
 			const value = _.trim(line.substr(key.length + 1));
-			return _.extend(returnObj, {[key]: value});
+			return _.extend(returnObj, { [key]: value });
 		}
 		return returnObj;
 	}, {});

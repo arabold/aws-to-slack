@@ -1,8 +1,6 @@
 //
 // AWS CodeDeploy SNS notifications
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	_.has(event.message, "deploymentId") && _.has(event.message, "deploymentGroupName");
 

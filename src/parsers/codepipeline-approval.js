@@ -1,8 +1,6 @@
 //
-// AWS CodePipeline Approval
+// AWS CodePipeline Approval Stage parser
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	_.has(event.message, "consoleLink")
 	&& _.has(event.message, "approval.pipelineName");

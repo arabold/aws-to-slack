@@ -1,6 +1,8 @@
-const _ = require("lodash");
-
-module.exports.matches = event => event.getSource() === "codebuild";
+//
+// AWS CodeBuild events
+//
+module.exports.matches = event =>
+	event.getSource() === "codebuild";
 
 module.exports.parse = event => {
 	const buildStatus = _.get(event, "detail.build-status");

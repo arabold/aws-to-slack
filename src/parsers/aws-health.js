@@ -1,9 +1,8 @@
 //
 // AWS Health Dashboard Message
 //
-const _ = require("lodash");
-
-module.exports.matches = event => event.getSource() === "health";
+module.exports.matches = event =>
+	event.getSource() === "health";
 
 module.exports.parse = event => {
 	const message = event.message;

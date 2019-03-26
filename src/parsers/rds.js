@@ -1,8 +1,6 @@
 //
 // RDS Message
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	_.get(event.message, "Event Source") === "db-instance";
 

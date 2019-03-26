@@ -1,8 +1,6 @@
 //
-// AWS CodePipeline via CloudWatch event parser
+// AWS CodePipeline event parser
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	event.getSource() === "codepipeline"
 	&& !_.has(event.message, "approval.pipelineName");

@@ -1,8 +1,6 @@
 //
 // SES "Received" notifications incoming via SNS
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	_.get(event.message, "notificationType") === "Received";
 

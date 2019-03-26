@@ -1,9 +1,8 @@
 //
 // AWS CodeDeploy via CloudWatch event rule
 //
-const _ = require("lodash");
-
-module.exports.matches = event => event.getSource() === "codedeploy";
+module.exports.matches = event =>
+	event.getSource() === "codedeploy";
 
 module.exports.parse = event => {
 	const deployState = _.get(event, "detail.state");
