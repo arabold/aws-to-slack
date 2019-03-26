@@ -8,8 +8,7 @@ module.exports.matches = () => true; // Match every event
 module.exports.parse = event => {
 	// Clone object so we can delete known keys
 	const message = _.clone(event.message);
-	const fallback = _.isString(message) ? message
-		: JSON.stringify(message, null, 2);
+	const fallback = JSON.stringify(event.record, null, 2);
 
 	let title = event.getSubject() || "Raw Event",
 		author_name = event.getSource() || "<unknown>",
