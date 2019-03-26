@@ -288,18 +288,16 @@ class AwsCloudWatchChart {
 	getTimeSlots() {
 		let toTime = 0;
 		let fromTime = +new Date();
-		let hasDataPoints = false;
-		_.each(this.metrics, m => {
-			if (m.datapoints.length) {
-				hasDataPoints = true;
-				const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
-				toTime = Math.max(_.max(dates), toTime);
-				fromTime = Math.min(_.min(dates), fromTime);
-			}
-		});
-		if (!hasDataPoints) {
+		const validDatapoints = _.filter(this.metrics, m => m.datapoints.length);
+		if (!validDatapoints.length) {
 			throw "No datapoints returned from CloudWatch, cannot render empty chart";
 		}
+
+		_.each(validDatapoints, m => {
+			const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
+			toTime = Math.max(_.max(dates), toTime);
+			fromTime = Math.min(_.min(dates), fromTime);
+		});
 		if (!fromTime || !toTime) {
 			throw "Cannot render a chart without timeframe";
 		}
