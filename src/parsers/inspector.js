@@ -1,9 +1,7 @@
 //
-// Parser for AWS Inspector notifications.
+// AWS Inspector notification parser
 // See: https://console.aws.amazon.com/inspector/home
 //
-const _ = require("lodash");
-
 module.exports.matches = event =>
 	_.startsWith(event.message.template, "arn:aws:inspector");
 
@@ -107,34 +105,28 @@ module.exports.parse = event => {
 		break;
 	case "ASSESSMENT_RUN_STATE_CHANGED":
 		title = "Assessment run";
-		switch (newState) {
-		case "COMPLETED":
-			text = "Completed";
-			break;
-		case "CREATED":
-			text = "Created";
-			break;
-		case "START_DATA_COLLECTION_PENDING":
-			text = "Starting data collection";
-			break;
-		case "COLLECTING_DATA":
-			text = "Collecting data";
-			break;
-		case "STOP_DATA_COLLECTION_PENDING":
-			text = "Stopping data collection";
-			break;
-		case "DATA_COLLECTED":
-			text = "Data collected";
-			break;
-		case "START_EVALUATING_RULES_PENDING":
-			text = "Start evaluating rules";
-			break;
-		case "EVALUATING_RULES":
-			text = "Evaluating rules";
-			break;
-		default:
-			text = newState;
-		}
+		text = (() => {
+			switch (newState) {
+			case "COMPLETED":
+				return "Completed";
+			case "CREATED":
+				return "Created";
+			case "START_DATA_COLLECTION_PENDING":
+				return "Starting data collection";
+			case "COLLECTING_DATA":
+				return "Collecting data";
+			case "STOP_DATA_COLLECTION_PENDING":
+				return "Stopping data collection";
+			case "DATA_COLLECTED":
+				return "Data collected";
+			case "START_EVALUATING_RULES_PENDING":
+				return "Start evaluating rules";
+			case "EVALUATING_RULES":
+				return "Evaluating rules";
+			default:
+				return newState;
+			}
+		})();
 		break;
 	case "ENABLE_ASSESSMENT_NOTIFICATIONS":
 		// We ignore the notification setup notifications as they are superfluous.
