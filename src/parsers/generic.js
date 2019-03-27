@@ -7,49 +7,49 @@ module.exports.matches = () => true; // Match every event
 
 module.exports.parse = event => {
 	// Clone object so we can delete known keys
-	const message = _.clone(event.message);
+	const msg = _.clone(event.message);
 	const fallback = JSON.stringify(event.record, null, 2);
 
 	let title = event.getSubject() || "Raw Event",
 		author_name = event.getSource() || "<unknown>",
 		fields, text;
 
-	if (_.isObject(message)) {
-		if (message.source) {
+	if (_.isObject(msg)) {
+		if (msg.source) {
 			let t = [];
-			if (message.region) {
-				t.push(message.region);
-				delete message.region;
+			if (msg.region) {
+				t.push(msg.region);
+				delete msg.region;
 			}
-			if (message.account) {
-				t.push(message.account);
-				delete message.account;
+			if (msg.account) {
+				t.push(msg.account);
+				delete msg.account;
 			}
 			t = t.length ? ` (${t.join(" - ")})` : "";
-			author_name = `${message.source}${t}`;
-			delete message.source;
+			author_name = `${msg.source}${t}`;
+			delete msg.source;
 		}
 
-		if (message["detail-type"]) {
-			title = message["detail-type"];
-			delete message["detail-type"];
+		if (msg["detail-type"]) {
+			title = msg["detail-type"];
+			delete msg["detail-type"];
 		}
 
-		if (message.time) {
+		if (msg.time) {
 			// automatically picked up by default handler
-			delete message.time;
+			delete msg.time;
 		}
 
 		// Serialize the whole event data
-		fields = objectToFields(message);
+		fields = objectToFields(msg);
 		text = fields ? ""
 		// eslint-disable-next-line lodash/prefer-lodash-method
-			: JSON.stringify(message, null, 2)
+			: JSON.stringify(msg, null, 2)
 				.replace(/^{\n/, "")
 				.replace(/\n}\n?$/, "");
 	}
-	else if (_.isString(message)) {
-		text = message;
+	else if (_.isString(msg)) {
+		text = msg;
 	}
 
 	return event.attachmentWithDefaults({
