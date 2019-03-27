@@ -5,12 +5,12 @@ module.exports.matches = event =>
 	event.getSource() === "codebuild";
 
 module.exports.parse = event => {
-	const msg = event.message;
-	const buildStatus = _.get(msg, "detail.build-status");
-	const project = _.get(msg, "detail.project-name");
-	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${msg.region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
-	const buildId = _.split(_.get(msg, "detail.build-id"), ":").pop();
-	const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${event.getRegion()}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
+	const buildStatus = event.get("detail.build-status");
+	const project = event.get("detail.project-name");
+	const region = event.get("region");
+	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
+	const buildId = _.split(event.get("detail.build-id"), ":").pop();
+	const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${region}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
 
 	const author_name = "AWS CodeBuild"
 		+ (event.getAccountId() ? ` (${event.getAccountId()})` : "");

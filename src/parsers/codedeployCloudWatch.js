@@ -5,11 +5,11 @@ module.exports.matches = event =>
 	event.getSource() === "codedeploy";
 
 module.exports.parse = event => {
-	const deployState = _.get(event, "detail.state");
-	const deploymentGroup = _.get(event, "detail.deploymentGroup");
-	const deploymentId = _.get(event, "detail.deploymentId");
-	const app = _.get(event, "detail.application");
-	const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.region}#/deployments/${deploymentId}`;
+	const deployState = event.get("detail.state");
+	const deploymentGroup = event.get("detail.deploymentGroup");
+	const deploymentId = event.get("detail.deploymentId");
+	const app = event.get("detail.application");
+	const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.getRegion()}#/deployments/${deploymentId}`;
 	const fields = [];
 
 	let color = event.COLORS.neutral;

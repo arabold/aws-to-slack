@@ -58,13 +58,12 @@ const ruleMappings = {
 };
 
 module.exports.parse = event => {
-	const message = event.message;
-	const target = _.get(message, "target", "");
-	const newState = _.get(message, "newstate", "");
-	const run = _.get(message, "run", "");
-	const findingsCount = _.get(message, "findingsCount", "");
-	const finding = _.get(message, "finding", "");
-	const inspectorEvent = _.get(message, "event", "");
+	const target = event.get("target", "");
+	const newState = event.get("newstate", "");
+	const run = event.get("run", "");
+	const findingsCount = event.get("findingsCount", "");
+	const finding = event.get("finding", "");
+	const inspectorEvent = event.get("event", "");
 
 	let title = "";
 	let text = "";

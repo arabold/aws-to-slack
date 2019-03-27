@@ -6,7 +6,7 @@ module.exports.matches = event =>
 	|| _.get(event.message, "detail.service.serviceName") === "guardduty";
 
 module.exports.parse = event => {
-	const detail = _.get(event.message, "detail");
+	const detail = event.get("detail");
 
 	//const id = _.get(detail, "id");
 	const title = _.get(detail, "title");

@@ -6,13 +6,12 @@ module.exports.matches = event =>
 	&& !_.has(event.message, "approval.pipelineName");
 
 module.exports.parse = event => {
-	const message = event.message;
-	const pipeline = _.get(message, "detail.pipeline", "<missing-pipeline>");
-	const state = _.get(message, "detail.state");
-	const type = _.get(message, "detail-type");
-	const execId = _.get(message, "detail.execution-id");
-	const stage = _.get(message, "detail.stage", "UNKNOWN");
-	const action = _.get(message, "detail.action", "UNKNOWN");
+	const pipeline = event.get("detail.pipeline", "<missing-pipeline>");
+	const state = event.get("detail.state");
+	const type = event.get("detail-type");
+	const execId = event.get("detail.execution-id");
+	const stage = event.get("detail.stage", "UNKNOWN");
+	const action = event.get("detail.action", "UNKNOWN");
 	const fields = [];
 
 	const region = event.getRegion();
@@ -28,8 +27,8 @@ module.exports.parse = event => {
 	let title;
 	const r = /(\w+) Execution State Change/.test(type) ? RegExp.$1 : "?";
 	if (r === "Action") {
-		const typeProvider = _.get(message, "detail.type.provider");
-		const typeCategory = _.get(message, "detail.type.category");
+		const typeProvider = event.get("detail.type.provider");
+		const typeCategory = event.get("detail.type.category");
 		title = `${pipeline} [Action: ${stage}/${action}] >> ${state}`;
 		text = `ExecID ${execId} is now ${state} at Action ${stage}/${action} (type: ${typeProvider} / ${typeCategory})`;
 	}

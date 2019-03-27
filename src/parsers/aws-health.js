@@ -5,17 +5,15 @@ module.exports.matches = event =>
 	event.getSource() === "health";
 
 module.exports.parse = event => {
-	const message = event.message;
-
-	const accountId = _.get(message, "account");
-	const detailType = _.get(message, "detail-type");
-	const service = _.get(message, "detail.service");
-	const eventTypeCategory = _.get(message, "detail.eventTypeCategory");
-	const eventDescription = _.get(message, "detail.eventDescription");
-	const affectedEntities = _.get(message, "detail.affectedEntities");
-	const time = _.get(message, "time");
-	const startTime = _.get(message, "detail.startTime");
-	const endTime = _.get(message, "detail.endTime");
+	const accountId = event.get("account");
+	const detailType = event.get("detail-type");
+	const service = event.get("detail.service");
+	const eventTypeCategory = event.get("detail.eventTypeCategory");
+	const eventDescription = event.get("detail.eventDescription");
+	const affectedEntities = event.get("detail.affectedEntities");
+	const time = event.get("time");
+	const startTime = event.get("detail.startTime");
+	const endTime = event.get("detail.endTime");
 
 	let text = _.get(_.find(eventDescription, ["language", "en_US"]), "latestDescription");
 	if (!text) {

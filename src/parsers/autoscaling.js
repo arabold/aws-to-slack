@@ -5,13 +5,12 @@ module.exports.matches = event =>
 	_.has(event.message, "AutoScalingGroupARN");
 
 module.exports.parse = event => {
-	const message = event.message;
-	const accountId = _.get(message, "AccountId");
-	//const requestId = _.get(message, "RequestId");
-	const arn = _.get(message, "AutoScalingGroupARN");
-	const groupName = _.get(message, "AutoScalingGroupName");
-	const service = _.get(message, "Service");
-	const eventName = _.get(message, "Event");
+	const accountId = event.get("AccountId");
+	//const requestId = event.get("RequestId");
+	const arn = event.get("AutoScalingGroupARN");
+	const groupName = event.get("AutoScalingGroupName");
+	const service = event.get("Service");
+	const eventName = event.get("Event");
 
 	// Example ARN: arn:aws:autoscaling:{region}:{accountId}:autoScalingGroup:{group-id}:autoScalingGroupName/{group-name}
 	const arnParts = _.split(arn, ":");

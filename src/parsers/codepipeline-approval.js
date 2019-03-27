@@ -6,9 +6,8 @@ module.exports.matches = event =>
 	&& _.has(event.message, "approval.pipelineName");
 
 module.exports.parse = event => {
-	const message = event.message;
-	const consoleLink = message.consoleLink;
-	const approval = message.approval;
+	const consoleLink = event.get("consoleLink");
+	const approval = event.get("approval", {});
 	const pipeline = approval.pipelineName;
 	const stage = approval.stageName;
 	const action = approval.actionName;

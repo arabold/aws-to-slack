@@ -5,11 +5,10 @@ module.exports.matches = event =>
 	_.get(event.message, "Event Source") === "db-instance";
 
 module.exports.parse = event => {
-	const message = event.message;
-	const text = _.get(message, "Event Message");
-	const instanceId = _.get(message, "Source ID");
-	const link = _.get(message, "Identifier Link");
-	const time = _.get(message, "Event Time");
+	const text = event.get("Event Message");
+	const instanceId = event.get("Source ID");
+	const link = event.get("Identifier Link");
+	const time = event.get("Event Time");
 
 	return event.attachmentWithDefaults({
 		fallback: `${instanceId}: ${text}`,

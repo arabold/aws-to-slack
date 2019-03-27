@@ -6,13 +6,12 @@ module.exports.matches = event =>
 	&& _.get(event.message, "detail-type") === "CodeCommit Repository State Change";
 
 module.exports.parse = event => {
-	const message = event.message;
-	const callerArn = _.get(message, "detail.callerUserArn");
-	const refName = _.get(message, "detail.referenceName");
-	const refType = _.get(message, "detail.referenceType");
-	const repoName = _.get(message, "detail.repositoryName");
-	const repoEvent = _.get(message, "detail.event");
-	const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${message.region}#/repository/${repoName}`;
+	const callerArn = event.get("detail.callerUserArn");
+	const refName = event.get("detail.referenceName");
+	const refType = event.get("detail.referenceType");
+	const repoName = event.get("detail.repositoryName");
+	const repoEvent = event.get("detail.event");
+	const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.get("region")}#/repository/${repoName}`;
 	const fields = [];
 
 	const color = event.COLORS.neutral;

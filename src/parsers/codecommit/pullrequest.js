@@ -6,15 +6,14 @@ module.exports.matches = event =>
 	&& _.get(event.message, "detail-type") === "CodeCommit Pull Request State Change";
 
 module.exports.parse = event => {
-	const message = event.message;
-	const callerArn = _.get(message, "detail.callerUserArn");
-	const repoName = _.get(message, "detail.repositoryNames[0]");
-	const pullRequestId = _.get(message, "detail.pullRequestId");
-	const pullRequestEvent = _.get(message, "detail.event");
-	const pullRequestMerged = _.get(message, "detail.isMerged");
-	const pullRequestStatus = _.get(message, "detail.pullRequestStatus");
-	const pullRequestTitle = _.get(message, "detail.title");
-	const pullRequestUrl = `https://console.aws.amazon.com/codecommit/home?region=${message.region}#/repository/${repoName}/pull-request/${pullRequestId}`;
+	const callerArn = event.get("detail.callerUserArn");
+	const repoName = event.get("detail.repositoryNames[0]");
+	const pullRequestId = event.get("detail.pullRequestId");
+	const pullRequestEvent = event.get("detail.event");
+	const pullRequestMerged = event.get("detail.isMerged");
+	const pullRequestStatus = event.get("detail.pullRequestStatus");
+	const pullRequestTitle = event.get("detail.title");
+	const pullRequestUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.get("region")}#/repository/${repoName}/pull-request/${pullRequestId}`;
 	const fields = [];
 
 	let color = event.COLORS.neutral;

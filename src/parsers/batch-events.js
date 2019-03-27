@@ -5,12 +5,11 @@ module.exports.matches = event =>
 	event.getSource() === "batch";
 
 module.exports.parse = event => {
-	const message = event.message;
-	const status = _.get(message, "detail.status");
-	const reason = _.get(message, "detail.statusReason");
-	const jobName = _.get(message, "detail.jobName");
-	const logStream = _.get(message, "detail.attempts[0].container.logStreamName");
-	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${message.region}#logEventViewer:group=/aws/batch/job;stream=${logStream};`;
+	const status = event.get("detail.status");
+	const reason = event.get("detail.statusReason");
+	const jobName = event.get("detail.jobName");
+	const logStream = event.get("detail.attempts[0].container.logStreamName");
+	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${event.get("region")}#logEventViewer:group=/aws/batch/job;stream=${logStream};`;
 	const fields = [];
 
 	let color = event.COLORS.neutral;

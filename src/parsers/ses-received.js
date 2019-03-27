@@ -5,12 +5,11 @@ module.exports.matches = event =>
 	_.get(event.message, "notificationType") === "Received";
 
 module.exports.parse = event => {
-	const message = event.message;
-	const source = _.get(message, "mail.source");
-	const destination = _.get(message, "mail.destination");
-	const timestamp = _.get(message, "mail.timestamp");
-	const subject = _.get(message, "mail.commonHeaders.subject");
-	const content = _.get(message, "content");
+	const source = event.get("mail.source");
+	const destination = event.get("mail.destination");
+	const timestamp = event.get("mail.timestamp");
+	const subject = event.get("mail.commonHeaders.subject");
+	const content = event.get("content");
 
 	const fields = [];
 	if (source) {
