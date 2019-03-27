@@ -5,30 +5,32 @@ module.exports.matches = event =>
 	event.getSource() === "codebuild";
 
 module.exports.parse = event => {
-	const buildStatus = _.get(event, "detail.build-status");
-	const project = _.get(event, "detail.project-name");
-	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${event.region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
-	const buildId = _.split(_.get(event, "detail.build-id"), ":").pop();
-	const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${event.region}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
+	const msg = event.message;
+	const buildStatus = _.get(msg, "detail.build-status");
+	const project = _.get(msg, "detail.project-name");
+	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${msg.region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
+	const buildId = _.split(_.get(msg, "detail.build-id"), ":").pop();
+	const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${event.getRegion()}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
+
+	const author_name = "AWS CodeBuild"
+		+ (event.getAccountId() ? ` (${event.getAccountId()})` : "");
+	const title = project;
+	const title_link = buildUrl;
 	const fields = [];
 
-	let color = event.COLORS.neutral;
-	let title = project;
-	if (buildStatus === "SUCCEEDED") {
-		title = `<${buildUrl}|${project}> has finished building`;
-		color = event.COLORS.ok;
-	}
-	else if (buildStatus === "STOPPED") {
-		title = `<${buildUrl}|${project}> was stopped`;
-		color = event.COLORS.warning;
-	}
-	else if (buildStatus === "FAILED") {
-		title = `<${buildUrl}|${project}> has failed to build`;
-		color = event.COLORS.critical;
-	}
-	else if (buildStatus === "IN_PROGRESS") {
-		title = `<${buildUrl}|${project}> has started building`;
-	}
+	const color = (COLORS => {
+		switch (buildStatus) {
+		case "SUCCEEDED":
+			return COLORS.ok;
+		case "STOPPED":
+			return COLORS.warning;
+		case "FAILED":
+			return COLORS.critical;
+		case "IN_PROGRESS":
+		default:
+			return event.COLORS.neutral;
+		}
+	})(event.COLORS);
 
 	if (buildStatus) {
 		fields.push({
@@ -45,11 +47,7 @@ module.exports.parse = event => {
 	});
 
 	return event.attachmentWithDefaults({
-		author_name: "Amazon CodeBuild",
+		color, author_name, title, title_link, fields,
 		fallback: `${project} ${buildStatus}`,
-		color: color,
-		title: title,
-		fields: fields,
-		mrkdwn_in: ["title", "text"],
 	});
 };
