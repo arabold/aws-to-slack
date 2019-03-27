@@ -32,6 +32,17 @@ class EventDef {
 	}
 
 	/**
+	 * Default data retrieval method.
+	 *
+	 * @param {string} path Lodash path syntax
+	 * @param {*} [defaultValue] Default value if missing
+	 * @returns {*} Value within message
+	 */
+	get(path, defaultValue) {
+		return _.get(this.message, path, defaultValue);
+	}
+
+	/**
 	 * Pull details from an AWS ARN.
 	 *
 	 * @param {string} arn An ARN to parse
