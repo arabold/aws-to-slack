@@ -318,19 +318,40 @@ class AwsCloudWatchChart {
 	}
 
 	/**
-	 * Generate a link to CloudWatch page filtering on logs for the given metric.
+	 * Generate a link to CloudWatch page filtering on logs for the first log-filter metric.
 	 *
 	 * @param {number|string|Date} timestamp Time of message
 	 * @param {string} [region] Region to set in link
-	 * @returns {string} The URL
+	 * @param {string} [logGroupName] Log group to link to, or empty to auto-discover
+	 * @returns {string|null} The URL
 	 */
-	getCloudWatchURL(timestamp, region) {
-		// Look up alarm, then metric filter, to get filter pattern so that we can generate a relevant cloudwatch link
-		const filterDef = _.get(this.metrics, "[0].filterDef");
-		if (!filterDef) {
+	getCloudWatchURL(timestamp, region, logGroupName) {
+		let filterPattern;
+
+		if (!logGroupName) {
+			// If is Lambda, link to logs by FunctionName
+			const lambdaFunctionName = _.chain(this.metrics)
+				.find(["query.Namespace", "AWS/Lambda"])
+				.get("query.Dimensions")
+				.find(["Name", "FunctionName"])
+				.get("Value").value();
+			if (lambdaFunctionName) {
+				logGroupName = `/aws/lambda/${lambdaFunctionName}`;
+			}
+		}
+
+		if (!logGroupName) {
+			// If is Metric Filter, look up alarm definition and set pattern
+			const filterDef = _.get(this.metrics, "[0].filterDef");
+			if (filterDef) {
+				logGroupName = filterDef.logGroupName;
+				filterPattern = filterDef.filterPattern;
+			}
+		}
+
+		if (!logGroupName) {
 			return null;
 		}
-		const { filterPattern, logGroupName } = filterDef;
 
 		// Generates start and end time ISO strings one hour before to one hour after the supplied timestamp
 		const eventTime = _.isDate(timestamp) ? timestamp : new Date(timestamp);
@@ -348,12 +369,11 @@ class AwsCloudWatchChart {
 			end: endTime.toISOString()
 		};
 
-		if (!region) {
-			region = "us-east-1";
-		}
-		return `https://console.aws.amazon.com/cloudwatch/home?region=${region}`
+		region = region ? `region=${region}` : "";
+
+		return `https://console.aws.amazon.com/cloudwatch/home?${region}`
 			+ `#logEventViewer:group=${encodeURIComponent(logGroupName)}`
-			+ `;filter=${encodeURIComponent(filterPattern)}`
+			+ (filterPattern ? `;filter=${encodeURIComponent(filterPattern)}` : "")
 			+ `;start=${logsTimeRange.start};end=${logsTimeRange.end}`;
 	}
 
