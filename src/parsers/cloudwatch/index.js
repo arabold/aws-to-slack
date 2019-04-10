@@ -33,7 +33,7 @@ module.exports.parse = async event => {
 	// Render chart
 	let image_url, logsUrl;
 	try {
-		const chart = await getChart(message);
+		const chart = await getChart(event);
 		logsUrl = chart.getCloudWatchURL(event.getTime(), region);
 		image_url = chart.getURL(message);
 	}
@@ -66,7 +66,12 @@ module.exports.parse = async event => {
 	});
 };
 
-
+/**
+ * Load and resolve chart object.
+ *
+ * @param {EventDef} event Event def
+ * @returns {Promise<AwsCloudWatchChart>} Loaded chart
+ */
 async function getChart(event) {
 	const message = event.message;
 	const trigger = message.Trigger;
