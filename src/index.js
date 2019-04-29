@@ -1,6 +1,7 @@
 const _ = require("lodash")
 	, EventDef = require("./eventdef")
 	, Slack = require("./slack")
+	, Emailer = require("./ses")
 	, defaultParserWaterfall = [
 		// Ordered list of parsers:
 		"cloudwatch",
@@ -138,6 +139,7 @@ class LambdaHandler {
 						const message = res.slackMessage;
 						console.log(`SNS-Record[${i}]: Sending Slack message from Parser[${res.parserName}]:`, JSON.stringify(message, null, 2));
 						waitingTasks.push(Slack.postMessage(message));
+						waitingTasks.push(Emailer.checkAndSend(message, event));
 					}
 					else if (handler.lastParser) {
 						console.error(`SNS-Record[${i}]: Parser[${handler.lastParser}] is force-ignoring record`);
@@ -153,6 +155,7 @@ class LambdaHandler {
 					const message = res.slackMessage;
 					console.log(`Sending Slack message from Parser[${res.parserName}]:`, JSON.stringify(message, null, 2));
 					waitingTasks.push(Slack.postMessage(message));
+					waitingTasks.push(Emailer.checkAndSend(message, event));
 				}
 				else if (handler.lastParser) {
 					console.error(`Parser[${handler.lastParser}] is force-ignoring event`);
