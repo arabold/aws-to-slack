@@ -57,7 +57,7 @@ class LambdaHandler {
 		}
 
 		// Execute all parsers and use the first successful result
-		for (const i in matchingParsers) {
+		for (const i of matchingParsers) {
 			const parser = matchingParsers[i];
 			const parserName = parser.name;
 			this.lastParser = parserName;
@@ -127,7 +127,7 @@ class LambdaHandler {
 			// To keep parsers as simple as possible, merge event into single-Record messages.
 			const Records = _.get(event, "Records");
 			if (_.isArray(Records) && Records.length > 1) {
-				for (const i in Records) {
+				for (const i of Records) {
 					// Copy single record into event
 					const singleRecordEvent = _.assign({}, event, {
 						Records: [ Records[i] ],

@@ -67,7 +67,7 @@ function objectToFields(obj) {
 	const keys = _.keys(obj);
 	if (0 < keys.length && keys.length <= 8) {
 		fields = [];
-		for (const i in keys) {
+		for (const i of keys) {
 			const key = keys[i];
 			let val = obj[key];
 			if (!_.isString(val)) {
