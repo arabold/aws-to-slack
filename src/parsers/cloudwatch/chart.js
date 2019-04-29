@@ -330,6 +330,7 @@ class AwsCloudWatchChart {
 
 		if (!logGroupName) {
 			// If is Lambda, link to logs by FunctionName
+			// eslint-disable-next-line lodash/chaining
 			const lambdaFunctionName = _.chain(this.metrics)
 				.find(["query.Namespace", "AWS/Lambda"])
 				.get("query.Dimensions")
