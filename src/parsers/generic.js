@@ -67,8 +67,7 @@ function objectToFields(obj) {
 	const keys = _.keys(obj);
 	if (0 < keys.length && keys.length <= 8) {
 		fields = [];
-		for (const i of keys) {
-			const key = keys[i];
+		for (const key of keys) {
 			let val = obj[key];
 			if (!_.isString(val)) {
 				val = JSON.stringify(val);
