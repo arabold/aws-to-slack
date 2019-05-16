@@ -1,10 +1,10 @@
 //
 // AWS CodeDeploy SNS notifications
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	_.has(event.message, "deploymentId") && _.has(event.message, "deploymentGroupName");
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const deployStatus = event.get("status");
 	const deploymentGroup = event.get("deploymentGroupName");
 	const deploymentId = event.get("deploymentId");

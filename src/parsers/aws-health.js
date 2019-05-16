@@ -1,10 +1,10 @@
 //
 // AWS Health Dashboard Message
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "health";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const accountId = event.get("account");
 	const detailType = event.get("detail-type");
 	const service = event.get("detail.service");

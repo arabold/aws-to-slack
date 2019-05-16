@@ -1,10 +1,10 @@
 //
 // AWS CodeBuild events
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "codebuild";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const buildStatus = event.get("detail.build-status");
 	const project = event.get("detail.project-name");
 	const region = event.get("region");

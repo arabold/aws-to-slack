@@ -1,11 +1,11 @@
 //
 // AWS CodePipeline event parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "codepipeline"
 	&& !_.has(event.message, "approval.pipelineName");
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const pipeline = event.get("detail.pipeline", "<missing-pipeline>");
 	const state = event.get("detail.state");
 	const type = event.get("detail-type");

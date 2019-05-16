@@ -1,11 +1,11 @@
 //
 // AWS CodeCommit: Repository change event
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "codecommit"
 	&& _.get(event.message, "detail-type") === "CodeCommit Repository State Change";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const callerArn = event.get("detail.callerUserArn");
 	const refName = event.get("detail.referenceName");
 	const refType = event.get("detail.referenceType");

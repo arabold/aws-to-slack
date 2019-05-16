@@ -1,10 +1,10 @@
 //
 // AWS Auto-Scaling event parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	_.has(event.message, "AutoScalingGroupARN");
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const accountId = event.get("AccountId");
 	//const requestId = event.get("RequestId");
 	const arn = event.get("AutoScalingGroupARN");

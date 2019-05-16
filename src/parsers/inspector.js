@@ -2,7 +2,7 @@
 // AWS Inspector notification parser
 // See: https://console.aws.amazon.com/inspector/home
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	_.startsWith(event.message.template, "arn:aws:inspector");
 
 /**
@@ -57,7 +57,7 @@ const ruleMappings = {
 	],
 };
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const target = event.get("target", "");
 	const newState = event.get("newstate", "");
 	const run = event.get("run", "");
@@ -93,7 +93,7 @@ module.exports.parse = event => {
 		color = event.COLORS.ok;
 		text += "*<" + getUrlForRun("finding", run) + "|Findings>*\n";
 		if (!_.isEmpty(findingsCount)) {
-			const parsedFindings = _.split(_.replace(findingsCount, /{|}/g, ""), ",");
+			const parsedFindings = _.split(_.replace(findingsCount, /[{}]/g, ""), ",");
 			text += _.join(_.map(parsedFindings, parsedFinding => formatFinding(parsedFinding)), "\n");
 		}
 		break;

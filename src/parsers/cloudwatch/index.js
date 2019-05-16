@@ -1,11 +1,11 @@
 //
 // CloudWatch Metric Alarm
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	_.has(event.message, "AlarmName")
 	&& _.has(event.message, "AlarmDescription");
 
-module.exports.parse = async event => {
+exports.parse = async event => {
 	const message = event.message;
 	const accountId = message.AWSAccountId;
 	const alarmName = message.AlarmName;

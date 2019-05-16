@@ -1,11 +1,11 @@
 //
 // AWS GuardDuty event parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "guardduty"
 	|| _.get(event.message, "detail.service.serviceName") === "guardduty";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const detail = event.get("detail");
 
 	//const id = _.get(detail, "id");

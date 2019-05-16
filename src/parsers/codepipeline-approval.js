@@ -1,11 +1,11 @@
 //
 // AWS CodePipeline Approval Stage parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	_.has(event.message, "consoleLink")
 	&& _.has(event.message, "approval.pipelineName");
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const consoleLink = event.get("consoleLink");
 	const approval = event.get("approval", {});
 	const pipeline = approval.pipelineName;

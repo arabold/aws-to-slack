@@ -3,9 +3,9 @@
 // Should safely be able to parse ANY kind of message and generate a Slack Message containing
 // the contents of that structure.
 //
-module.exports.matches = () => true; // Match every event
+exports.matches = () => true; // Match every event
 
-module.exports.parse = event => {
+exports.parse = event => {
 	// Clone object so we can delete known keys
 	const msg = _.clone(event.message);
 	const fallback = JSON.stringify(event.record, null, 2);

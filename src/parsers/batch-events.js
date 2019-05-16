@@ -1,10 +1,10 @@
 //
 // AWS Batch event parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "batch";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const status = event.get("detail.status");
 	const reason = event.get("detail.statusReason");
 	const jobName = event.get("detail.jobName");

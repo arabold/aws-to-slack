@@ -1,11 +1,11 @@
 //
 // AWS CloudFormation event parser
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	// Will only match SNS messages
 	_.startsWith(event.getSubject(), "AWS CloudFormation Notification");
 
-module.exports.parse = event => {
+exports.parse = event => {
 	// Split the incoming message into individual fields for easier parsing
 	const lines = _.split(event.message, "\n");
 	const messageObj = _.reduce(lines, (returnObj, line) => {

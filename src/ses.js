@@ -13,7 +13,7 @@ const ToAddresses = _.compact(_.map(
  * @param {{}} event Raw event
  * @returns {Promise} Always-resolving Promise
  */
-module.exports.checkAndSend = async (slackMessage, event) => {
+exports.checkAndSend = async (slackMessage, event) => {
 	if (!ToAddresses.length) {
 		return null;
 	}
@@ -101,13 +101,13 @@ function render(slackMessage, event) {
 <div style="padding:4px 4px 4px 1em;border-left:4px solid ${color}">`);
 
 	if (att.author_name) {
-		const authLink = !att.author_link ? "" : ` href="${escape(att.author_link)}"`;
-		html.push(`<a style="display:block;font-size:1.6em;margin:.1em 0;font-weight:bold"${authLink}>${escape(att.author_name)}</a>`);
+		const authLink = !att.author_link ? "" : `href="${escape(att.author_link)}"`;
+		html.push(`<a style="display:block;font-size:1.6em;margin:.1em 0;font-weight:bold" ${authLink}>${escape(att.author_name)}</a>`);
 		text.push(authLink ? `${att.author_name}\n${att.author_link}\n` : att.author_name);
 	}
 	if (att.title) {
-		const titleLink = !att.title_link ? "" : ` href="${escape(att.title_link)}"`;
-		html.push(`<a style="display:block;font-size:1.3em;color:#999;"${titleLink}>${escape(att.title)}</a>`);
+		const titleLink = !att.title_link ? "" : `href="${escape(att.title_link)}"`;
+		html.push(`<a style="display:block;font-size:1.3em;color:#999;" ${titleLink}>${escape(att.title)}</a>`);
 		text.push(titleLink ? `${att.title}\n${att.title_link}\n` : att.title);
 	}
 	if (att.text) {

@@ -1,11 +1,11 @@
 //
 // AWS CodeCommit: Pull Request event
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "codecommit"
 	&& _.get(event.message, "detail-type") === "CodeCommit Pull Request State Change";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const callerArn = event.get("detail.callerUserArn");
 	const repoName = event.get("detail.repositoryNames[0]");
 	const pullRequestId = event.get("detail.pullRequestId");

@@ -1,10 +1,10 @@
 //
 // AWS CodeDeploy via CloudWatch event rule
 //
-module.exports.matches = event =>
+exports.matches = event =>
 	event.getSource() === "codedeploy";
 
-module.exports.parse = event => {
+exports.parse = event => {
 	const deployState = event.get("detail.state");
 	const deploymentGroup = event.get("detail.deploymentGroup");
 	const deploymentId = event.get("detail.deploymentId");
