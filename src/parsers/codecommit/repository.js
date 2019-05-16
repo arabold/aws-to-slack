@@ -1,39 +1,10 @@
-"use strict";
-
-const AWS = require('aws-sdk');
-let codecommit = new AWS.CodeCommit({apiVersion:'2015-04-13'});
-
-const _ = require("lodash"),
-Slack = require("../../slack");
-
-let getMessage = (repoName, branchName) => {
-	return new Promise ((resolve,reject) => {
-		codecommit.getBranch({
-			branchName: branchName,
-			repositoryName: repoName
-		},(err,response) => {
-			if (err) {
-				reject(err);
-			} else {
-				let lastCommitID = response.branch.commitId;
-				codecommit.getCommit({
-					repositoryName: repoName,
-					commitId: lastCommitID
-				}, (err2, response2) => {
-					if (err2) {
-						reject(err2);
-					} else {
-						resolve(response2.commit.message);
-					}
-				});
-			}
-		});
-	});
-};
+const _ = require("lodash")
+	, AWS = require("aws-sdk")
+	, Slack = require("../../slack");
 
 class CodeCommitRepositoryParser {
 
-	parse(event) {
+	async parse(event) {
 		if (_.get(event, "source") !== "aws.codecommit") {
 			return false;
 		}
@@ -55,19 +26,15 @@ class CodeCommitRepositoryParser {
 		const color = Slack.COLORS.neutral;
 
 		let title = repoName;
-		let getText = false;
 
 		if (repoEvent === "referenceCreated" && refType === "branch") {
 			title = `New branch created in repository ${repoName}`;
-			getText = true;
 		}
 		else if (repoEvent === "referenceUpdated" && refType === "branch") {
 			title = `New commit pushed to repository ${repoName}`;
-			getText = true;
 		}
 		else if (repoEvent === "referenceDeleted" && refType === "branch") {
 			title = `Deleted branch in repository ${repoName}`;
-			getText = true;
 		}
 		else if (repoEvent === "referenceCreated" && refType === "tag") {
 			title = `New tag created in repository ${repoName}`;
@@ -102,53 +69,48 @@ class CodeCommitRepositoryParser {
 				value: callerArn,
 			});
 		}
-		if (getText) {
-			getMessage(repoName,refName)
-				.then((msg) => {
-					return {
-						attachments: [{
-							author_name: "AWS CodeCommit",
-							fallback: `${repoName}: ${title}`,
-							color: color,
-							title: title,
-							title_link: repoUrl,
-							text: msg,
-							fields: fields,
-							mrkdwn_in: ["title", "text"],
-							ts: Slack.toEpochTime(time)
-						}]
-					};
-				})
-				.catch((err) => {
-					return {
-						attachments: [{
-							author_name: "AWS CodeCommit",
-							fallback: `${repoName}: ${title}`,
-							color: color,
-							title: title,
-							title_link: repoUrl,
-							text: "Could not get message.",
-							fields: fields,
-							mrkdwn_in: ["title", "text"],
-							ts: Slack.toEpochTime(time)
-						}]
-					};
-				});
-		} else {
-			return {
-				attachments: [{
-					author_name: "AWS CodeCommit",
-					fallback: `${repoName}: ${title}`,
-					color: color,
-					title: title,
-					title_link: repoUrl,
-					fields: fields,
-					mrkdwn_in: ["title", "text"],
-					ts: Slack.toEpochTime(time)
-				}]
-			};
+
+		const att = {
+			author_name: "AWS CodeCommit",
+			fallback: `${repoName}: ${title}`,
+			color: color,
+			title: title,
+			title_link: repoUrl,
+			fields: fields,
+			mrkdwn_in: ["title", "text"],
+			ts: Slack.toEpochTime(time)
+		};
+
+		const client = new AWS.CodeCommit();
+		let commitId = _.get(event, "detail.commitId");
+		if (!commitId && refType === "branch") {
+			try {
+				const res = await client.getBranch({
+					repositoryName: repoName,
+					branchName: refName
+				}).promise();
+				commitId = res.branch.commitId;
+			}
+			catch (err) {
+				console.error("repository.js: Failed to inspect branch:", err);
+				att.text = "Could not inspect repository. Check logs for stack trace.";
+			}
+		}
+		if (commitId) {
+			try {
+				const res2 = await client.getCommit({
+					repositoryName: repoName,
+					commitId: commitId,
+				}).promise();
+				att.text = res2.commit.message;
+			}
+			catch (err) {
+				console.error("repository.js: Failed to retrieve CodeCommit message:", err);
+				att.text = "Could not get message. Check logs for stack trace.";
+			}
 		}
 
+		return { attachments: [att] };
 	}
 }
 
