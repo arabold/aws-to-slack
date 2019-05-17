@@ -67,6 +67,7 @@ Resources:
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      - arn:aws:iam::aws:policy/AWSCodeCommitReadOnly
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
