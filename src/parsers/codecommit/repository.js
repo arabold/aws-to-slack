@@ -60,7 +60,10 @@ exports.parse = async (event) => {
 		});
 	}
 
-	const client = new AWS.CodeCommit();
+	const client = new AWS.CodeCommit({
+		region: event.getRegion(),
+		httpOptions: { timeout: 5, connectTimeout: 1 }
+	});
 	let commitId = _.get(event, "detail.commitId");
 	let text;
 	if (!commitId && refType === "branch") {
