@@ -1,5 +1,3 @@
-"use strict";
-
 const handleEvent = require("../src/index");
 
 function handleStdIn() {

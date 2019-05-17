@@ -1,7 +1,7 @@
-"use strict";
-
 const _ = require("lodash")
+	, EventDef = require("./eventdef")
 	, Slack = require("./slack")
+	, Emailer = require("./ses")
 	, defaultParserWaterfall = [
 		// Ordered list of parsers:
 		"cloudwatch",
@@ -15,9 +15,8 @@ const _ = require("lodash")
 		"codebuild",
 		"codedeployCloudWatch",
 		"codedeploySns",
-		"codepipelineSns",
+		"codepipeline",
 		"codepipeline-approval",
-		"codepipelineCloudWatch",
 		"guardduty",
 		"inspector",
 		"rds",
@@ -28,31 +27,42 @@ const _ = require("lodash")
 
 class LambdaHandler {
 
-	constructor() {
-		// clone so can be tested
-		this.parsers = new Array(defaultParserWaterfall.length);
-		this.parserNames = new Array(defaultParserWaterfall.length);
-		_.each(defaultParserWaterfall, (name, i) => {
-			this.parserNames[i] = name;
-			this.parsers[i] = require(`./parsers/${name}`);
-		});
+	constructor(waterfall = defaultParserWaterfall) {
 		this.lastParser = null;
+		this.parsers = _.map(waterfall, name => {
+			const parser = require(`./parsers/${name}`);
+			if (!parser.name) {
+				// modify package in-memory
+				parser.name = name;
+			}
+			return parser;
+		});
 	}
 
 	/**
 	 * Run .parse() on each handler in-sequence.
 	 *
-	 * @param {{}} event Single-event object
+	 * @param {EventDef} eventDef Single-event object
 	 * @returns {Promise<?{}>} Resulting message or null if no match found
 	 */
-	async processEvent(event) {
+	async processEvent(eventDef) {
+		const matchingParsers = this.matchToParser(eventDef);
+		if (!matchingParsers.length) {
+			console.error("No parsers matched!");
+		}
+		if (matchingParsers.length > 2) {
+			// [0] => custom parser
+			// [1] => custom parser <<< this is the problem!
+			// [2] => generic parser
+			console.log("Multiple Parsers matched (using first):", _.map(matchingParsers, p => p.name));
+		}
+
 		// Execute all parsers and use the first successful result
-		for (const i in this.parsers) {
-			const parserName = this.parserNames[i];
+		for (const parser of matchingParsers) {
+			const parserName = parser.name;
 			this.lastParser = parserName;
 			try {
-				const parser = new this.parsers[i]();
-				const message = await parser.parse(event);
+				const message = await parser.parse(eventDef);
 				if (message) {
 					// Truthy but empty message will stop execution
 					if (message === true || _.isEmpty(message)) {
@@ -60,10 +70,7 @@ class LambdaHandler {
 						return null;// never send empty message
 					}
 
-					// Set return value as properties of object
-					parser.slackMessage = message;
-					parser.name = parserName;
-					return parser;
+					return { parser, parserName, slackMessage: message };
 				}
 			}
 			catch (e) {
@@ -72,6 +79,24 @@ class LambdaHandler {
 			// clear state
 			this.lastParser = null;
 		}
+	}
+
+	/**
+	 * Return all matched parsers for event.
+	 *
+	 * @param {EventDef} eventDef Event abstraction instance
+	 * @returns {Array} List of parsers that claim to match event
+	 */
+	matchToParser(eventDef) {
+		return _.filter(this.parsers, parser => {
+			try {
+				return parser.matches(eventDef);
+			}
+			catch (err) {
+				console.error(`matchToParser[${parser.name}]`, err);
+				return false;
+			}
+		});
 	}
 
 	/**
@@ -97,6 +122,7 @@ class LambdaHandler {
 
 		try {
 			const handler = new LambdaHandler();
+			const waitingTasks = [];
 
 			// Handle SNS payloads with >1 messages differently!
 			// To keep parsers as simple as possible, merge event into single-Record messages.
@@ -108,11 +134,12 @@ class LambdaHandler {
 						Records: [ Records[i] ],
 					});
 
-					const parser = await handler.processEvent(singleRecordEvent);
-					if (parser) {
-						const message = parser.slackMessage;
-						console.log(`SNS-Record[${i}]: Sending Slack message from Parser[${parser.name}]:`, JSON.stringify(message, null, 2));
-						await Slack.postMessage(message);
+					const res = await handler.processEvent(new EventDef(singleRecordEvent));
+					if (res) {
+						const message = res.slackMessage;
+						console.log(`SNS-Record[${i}]: Sending Slack message from Parser[${res.parserName}]:`, JSON.stringify(message, null, 2));
+						waitingTasks.push(Slack.postMessage(message));
+						waitingTasks.push(Emailer.checkAndSend(message, event));
 					}
 					else if (handler.lastParser) {
 						console.error(`SNS-Record[${i}]: Parser[${handler.lastParser}] is force-ignoring record`);
@@ -123,11 +150,12 @@ class LambdaHandler {
 				}
 			}
 			else {
-				const parser = await handler.processEvent(event);
-				if (parser) {
-					const message = parser.slackMessage;
-					console.log(`Sending Slack message from Parser[${parser.name}]:`, JSON.stringify(message, null, 2));
-					await Slack.postMessage(message);
+				const res = await handler.processEvent(new EventDef(event));
+				if (res) {
+					const message = res.slackMessage;
+					console.log(`Sending Slack message from Parser[${res.parserName}]:`, JSON.stringify(message, null, 2));
+					waitingTasks.push(Slack.postMessage(message));
+					waitingTasks.push(Emailer.checkAndSend(message, event));
 				}
 				else if (handler.lastParser) {
 					console.error(`Parser[${handler.lastParser}] is force-ignoring event`);
@@ -136,6 +164,8 @@ class LambdaHandler {
 					console.log("No parser matched event");
 				}
 			}
+
+			await Promise.all(waitingTasks);
 
 			callback();
 		}

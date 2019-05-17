@@ -1,121 +1,83 @@
-/* eslint lodash/prefer-lodash-method:0 */
-"use strict";
+//
+// Generic event parser
+// Should safely be able to parse ANY kind of message and generate a Slack Message containing
+// the contents of that structure.
+//
+exports.matches = () => true; // Match every event
 
-const _ = require("lodash"),
-	SNSParser = require("./sns"),
-	Slack = require("../slack");
+exports.parse = event => {
+	// Clone object so we can delete known keys
+	const msg = _.clone(event.message);
+	const fallback = JSON.stringify(event.record, null, 2);
 
-class GenericParser extends SNSParser {
+	let title = event.getSubject() || "Raw Event",
+		author_name = event.getSource() || "<unknown>",
+		fields, text;
 
-	async parse(event) {
-		try {
-			// Attempt to treat as JSON-based SNS message
-			const resp = await super.parse(event);
-			if (resp) {
-				return resp;
-			}
-		}
-		catch (err) {
-			// do nothing
-		}
-
-		// Clone object so we can delete known keys
-		const fallback = JSON.stringify(event, null, 2);
-		event = _.clone(event);
-
-		let title = "Raw Event",
-			author_name = "<unknown>",
-			ts = new Date();
-
-		if (event.source) {
+	if (_.isObject(msg)) {
+		if (msg.source) {
 			let t = [];
-			if (event.region) {
-				t.push(event.region);
-				delete event.region;
+			if (msg.region) {
+				t.push(msg.region);
+				delete msg.region;
 			}
-			if (event.account) {
-				t.push(event.account);
-				delete event.account;
+			if (msg.account) {
+				t.push(msg.account);
+				delete msg.account;
 			}
 			t = t.length ? ` (${t.join(" - ")})` : "";
-			author_name = `${event.source}${t}`;
-			delete event.source;
+			author_name = `${msg.source}${t}`;
+			delete msg.source;
 		}
 
-		if (event["detail-type"]) {
-			title = event["detail-type"];
-			delete event["detail-type"];
+		if (msg["detail-type"]) {
+			title = msg["detail-type"];
+			delete msg["detail-type"];
 		}
 
-		if (event.time) {
-			try {
-				ts = new Date(event.time);
-				delete event.time;
-			}
-			catch (err) {
-				// do nothing
-			}
+		if (msg.time) {
+			// automatically picked up by default handler
+			delete msg.time;
 		}
 
 		// Serialize the whole event data
-		const fields = this.objectToFields(event);
-		const text = fields ? []
-			: JSON.stringify(event, null, 2)
+		fields = objectToFields(msg);
+		text = fields ? ""
+		// eslint-disable-next-line lodash/prefer-lodash-method
+			: JSON.stringify(msg, null, 2)
 				.replace(/^{\n/, "")
 				.replace(/\n}\n?$/, "");
-
-		return {
-			attachments: [{
-				color: Slack.COLORS.neutral,
-				ts: Slack.toEpochTime(ts),
-				fallback,
-				author_name,
-				title,
-				text,
-				fields,
-			}]
-		};
+	}
+	else if (_.isString(msg)) {
+		text = msg;
 	}
 
-	handleMessage(message) {
-		const title = this.getSubject();
-		const time = new Date(this.getTimestamp());
-		const fields = this.objectToFields(message);
-		const fallback = JSON.stringify(message);
-		const text = fields ? undefined : fallback;
+	return event.attachmentWithDefaults({
+		color: event.COLORS.neutral,
+		fallback,
+		author_name,
+		title,
+		text,
+		fields,
+	});
+};
 
-		return {
-			attachments: [{
-				color: Slack.COLORS.neutral,
-				ts: Slack.toEpochTime(time || new Date()),
-				fields,
-				title,
-				text,
-				fallback,
-			}]
-		};
-	}
-
-	objectToFields(obj) {
-		let fields;
-		const keys = _.keys(obj);
-		if (0 < keys.length && keys.length <= 8) {
-			fields = [];
-			for (const i in keys) {
-				const key = keys[i];
-				let val = obj[key];
-				if (!_.isString(val)) {
-					val = JSON.stringify(val);
-				}
-				fields.push({
-					title: key,
-					value: val,
-					short: val.length < 40,
-				});
+function objectToFields(obj) {
+	let fields;
+	const keys = _.keys(obj);
+	if (0 < keys.length && keys.length <= 8) {
+		fields = [];
+		for (const key of keys) {
+			let val = obj[key];
+			if (!_.isString(val)) {
+				val = JSON.stringify(val);
 			}
+			fields.push({
+				title: key,
+				value: val,
+				short: val.length < 40,
+			});
 		}
-		return fields;
 	}
+	return fields;
 }
-
-module.exports = GenericParser;

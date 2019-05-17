@@ -1,15 +1,12 @@
-"use strict";
-/**
- * Parser for AWS Inspector notifications.
- * See: https://console.aws.amazon.com/inspector/home
- */
-
-const _ = require("lodash"),
-	SNSParser = require("./sns"),
-	Slack = require("../slack");
+//
+// AWS Inspector notification parser
+// See: https://console.aws.amazon.com/inspector/home
+//
+exports.matches = event =>
+	_.startsWith(event.message.template, "arn:aws:inspector");
 
 /**
- * Mapping of rule arns to readable text.
+ * Mapping of rule ARNs to readable text.
  * See: https://docs.aws.amazon.com/inspector/latest/userguide/inspector_rules-arns.html
  * The mappings are reversed to optimize extensibility by adding a new region arns.
  */
@@ -60,128 +57,107 @@ const ruleMappings = {
 	],
 };
 
-class InspectorParser extends SNSParser {
+exports.parse = event => {
+	const target = event.get("target", "");
+	const newState = event.get("newstate", "");
+	const run = event.get("run", "");
+	const findingsCount = event.get("findingsCount", "");
+	const finding = event.get("finding", "");
+	const inspectorEvent = event.get("event", "");
 
-	_getUrlForRun(kind, runArn) {
-		const parsedRun = /arn:aws:inspector:(.*?):[0-9]+:.*/.exec(runArn);
-		const region = _.get(parsedRun, "[1]", "invalid");
-		const findingBaseUrl = `https://console.aws.amazon.com/inspector/home?region=${region}#/${kind}`;
-		const filter = encodeURIComponent(JSON.stringify({
-			assessmentRunArns: [
-				runArn
-			]
-		}));
-		return `${findingBaseUrl}?filter=${filter}`;
-	}
+	let title = "";
+	let text = "";
 
-	_formatFinding(finding) {
-		const [ arn, val=0 ] = _.split(_.trim(finding), "=");
-		const ruleName = _.findKey(ruleMappings, arns => _.includes(arns, arn)) || arn;
-
-		return `${ruleName}: ${val}`;
-	}
-
-	handleMessage(message) {
-		const template = _.get(message, "template", "");
-		if (!_.startsWith(template, "arn:aws:inspector")) {
-			// Not of interest for us
-			return false;
-		}
-
-		const time = new Date(_.get(message, "time"));
-		const target = _.get(message, "target", "");
-		const newState = _.get(message, "newstate", "");
-		const run = _.get(message, "run", "");
-		const findingsCount = _.get(message, "findingsCount", "");
-		const finding = _.get(message, "finding", "");
-		const inspectorEvent = _.get(message, "event", "");
-
-		let title = "";
-		let text = "";
-
-		const fields = [{
-			title: "Target",
-			value: target,
+	const fields = [{
+		title: "Target",
+		value: target,
+		short: false
+	}];
+	if (!_.isEmpty(run)) {
+		fields.push({
+			title: "Run",
+			value: "<" + getUrlForRun("run", run) + `|${run}>\n`,
 			short: false
-		}];
-		if (!_.isEmpty(run)) {
-			fields.push({
-				title: "Run",
-				value: "<" + this._getUrlForRun("run", run) + `|${run}>\n`,
-				short: false
-			});
-		}
+		});
+	}
 
-		// We use a color and text depending on the events
-		let color = Slack.COLORS.neutral;
-		switch (inspectorEvent) {
-		case "ASSESSMENT_RUN_STARTED":
-			title = "Assessment run started";
-			color = Slack.COLORS.ok;
-			break;
-		case "ASSESSMENT_RUN_COMPLETED":
-			title = "Assessment run summary";
-			color = Slack.COLORS.ok;
-			text += "*<" + this._getUrlForRun("finding", run) + "|Findings>*\n";
-			if (!_.isEmpty(findingsCount)) {
-				const parsedFindings = _.split(_.replace(findingsCount, /{|}/g, ""), ",");
-				text += _.join(_.map(parsedFindings, parsedFinding => this._formatFinding(parsedFinding)), "\n");
-			}
-			break;
-		case "FINDING_REPORTED":
-			title = "Finding reported";
-			color = Slack.COLORS.warning;
-			text = finding;
-			break;
-		case "ASSESSMENT_RUN_STATE_CHANGED":
-			title = "Assessment run";
+	// We use a color and text depending on the events
+	let color = event.COLORS.neutral;
+	switch (inspectorEvent) {
+	case "ASSESSMENT_RUN_STARTED":
+		title = "Assessment run started";
+		color = event.COLORS.ok;
+		break;
+	case "ASSESSMENT_RUN_COMPLETED":
+		title = "Assessment run summary";
+		color = event.COLORS.ok;
+		text += "*<" + getUrlForRun("finding", run) + "|Findings>*\n";
+		if (!_.isEmpty(findingsCount)) {
+			const parsedFindings = _.split(_.replace(findingsCount, /[{}]/g, ""), ",");
+			text += _.join(_.map(parsedFindings, parsedFinding => formatFinding(parsedFinding)), "\n");
+		}
+		break;
+	case "FINDING_REPORTED":
+		title = "Finding reported";
+		color = event.COLORS.warning;
+		text = finding;
+		break;
+	case "ASSESSMENT_RUN_STATE_CHANGED":
+		title = "Assessment run";
+		text = (() => {
 			switch (newState) {
 			case "COMPLETED":
-				text = "Completed";
-				break;
+				return "Completed";
 			case "CREATED":
-				text = "Created";
-				break;
+				return "Created";
 			case "START_DATA_COLLECTION_PENDING":
-				text = "Starting data collection";
-				break;
+				return "Starting data collection";
 			case "COLLECTING_DATA":
-				text = "Collecting data";
-				break;
+				return "Collecting data";
 			case "STOP_DATA_COLLECTION_PENDING":
-				text = "Stopping data collection";
-				break;
+				return "Stopping data collection";
 			case "DATA_COLLECTED":
-				text = "Data collected";
-				break;
+				return "Data collected";
 			case "START_EVALUATING_RULES_PENDING":
-				text = "Start evaluating rules";
-				break;
+				return "Start evaluating rules";
 			case "EVALUATING_RULES":
-				text = "Evaluating rules";
-				break;
+				return "Evaluating rules";
 			default:
-				text = newState;
+				return newState;
 			}
-			break;
-		case "ENABLE_ASSESSMENT_NOTIFICATIONS":
-			// We ignore the notification setup notifications as they are superfluous.
-			return false;
-		}
-
-		return {
-			attachments: [{
-				author_name: "Amazon Inspector",
-				fallback: text,
-				color: color,
-				title: title,
-				text: text,
-				fields: fields,
-				mrkdwn_in: [ "text" ],
-				ts: Slack.toEpochTime(time)
-			}]
-		};
+		})();
+		break;
+	case "ENABLE_ASSESSMENT_NOTIFICATIONS":
+		// We ignore the notification setup notifications as they are superfluous.
+		return false;
 	}
+
+	return event.attachmentWithDefaults({
+		author_name: "Amazon Inspector",
+		fallback: text,
+		color: color,
+		title: title,
+		text: text,
+		fields: fields,
+		mrkdwn_in: ["text"],
+	});
+};
+
+function getUrlForRun(kind, runArn) {
+	const parsedRun = /arn:aws:inspector:(.*?):[0-9]+:.*/.exec(runArn);
+	const region = _.get(parsedRun, "[1]", "invalid");
+	const findingBaseUrl = `https://console.aws.amazon.com/inspector/home?region=${region}#/${kind}`;
+	const filter = encodeURIComponent(JSON.stringify({
+		assessmentRunArns: [
+			runArn
+		]
+	}));
+	return `${findingBaseUrl}?filter=${filter}`;
 }
 
-module.exports = InspectorParser;
+function formatFinding(finding) {
+	const [arn, val = 0] = _.split(_.trim(finding), "=");
+	const ruleName = _.findKey(ruleMappings, arns => _.includes(arns, arn)) || arn;
+
+	return `${ruleName}: ${val}`;
+}

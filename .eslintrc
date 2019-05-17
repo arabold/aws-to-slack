@@ -7,8 +7,11 @@ env:
   es6: true
   node: true
   mocha: true
+globals:
+  _: readonly
 extends:
   - eslint:recommended
+  - plugin:lodash/canonical
   - plugin:lodash/recommended
   - plugin:promise/recommended
   - plugin:import/errors

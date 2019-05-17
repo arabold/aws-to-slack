@@ -1,5 +1,3 @@
-"use strict";
-
 const url = require("url")
 	, https = require("https")
 	, AWS = require("aws-sdk")
@@ -155,6 +153,7 @@ function postJson(data, endpoint) {
 			"Content-Type": "application/json",
 			"Content-Length": Buffer.byteLength(body),
 		};
+		options.timeout = 3500;
 
 		const postReq = https.request(options, res => {
 			const chunks = [];

@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-const subject = "AWS CloudFormation Notification"
+const subject = "AWS CloudFormation Notification";
 
 // LogicalResourceId === StackName
 const matchingSnsMessage = [

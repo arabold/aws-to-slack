@@ -1,117 +1,106 @@
-const _ = require("lodash")
-	, AWS = require("aws-sdk")
-	, Slack = require("../../slack");
+//
+// AWS CodeCommit: Repository change event
+//
+const AWS = require("aws-sdk");
 
-class CodeCommitRepositoryParser {
+exports.matches = event =>
+	event.getSource() === "codecommit"
+	&& _.get(event.message, "detail-type") === "CodeCommit Repository State Change";
 
-	async parse(event) {
-		if (_.get(event, "source") !== "aws.codecommit") {
-			return false;
-		}
+exports.parse = async (event) => {
+	const callerArn = event.get("detail.callerUserArn");
+	const refName = event.get("detail.referenceName");
+	const refType = event.get("detail.referenceType");
+	const repoName = event.get("detail.repositoryName");
+	const repoEvent = event.get("detail.event");
+	const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.get("region")}#/repository/${repoName}`;
+	const fields = [];
 
-		if (_.get(event, "detail-type") !== "CodeCommit Repository State Change") {
-			// Not of interest for us
-			return false;
-		}
-
-		const time = new Date(_.get(event, "time"));
-		const callerArn = _.get(event, "detail.callerUserArn");
-		const refName = _.get(event, "detail.referenceName");
-		const refType = _.get(event, "detail.referenceType");
-		const repoName = _.get(event, "detail.repositoryName");
-		const repoEvent = _.get(event, "detail.event");
-		const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.region}#/repository/${repoName}`;
-		const fields = [];
-
-		const color = Slack.COLORS.neutral;
-
-		let title = repoName;
-
-		if (repoEvent === "referenceCreated" && refType === "branch") {
-			title = `New branch created in repository ${repoName}`;
-		}
-		else if (repoEvent === "referenceUpdated" && refType === "branch") {
-			title = `New commit pushed to repository ${repoName}`;
-		}
-		else if (repoEvent === "referenceDeleted" && refType === "branch") {
-			title = `Deleted branch in repository ${repoName}`;
-		}
-		else if (repoEvent === "referenceCreated" && refType === "tag") {
-			title = `New tag created in repository ${repoName}`;
-		}
-		else if (repoEvent === "referenceUpdated" && refType === "tag") {
-			title = `Tag reference modified in repository ${repoName}`;
-		}
-		else if (repoEvent === "referenceDeleted" && refType === "tag") {
-			title = `Deleted tag in repository ${repoName}`;
-		}
-
-
-		if (repoName) {
-			fields.push({
-				title: "Repository",
-				value: repoName,
-				short: true,
-			});
-		}
-
-		if (refType) {
-			fields.push({
-				title: _.toUpper(refType.charAt(0)) + refType.slice(1),
-				value: refName,
-				short: true,
-			});
-		}
-
-		if (callerArn) {
-			fields.push({
-				title: "Caller ARN",
-				value: callerArn,
-			});
-		}
-
-		const att = {
-			author_name: "AWS CodeCommit",
-			fallback: `${repoName}: ${title}`,
-			color: color,
-			title: title,
-			title_link: repoUrl,
-			fields: fields,
-			mrkdwn_in: ["title", "text"],
-			ts: Slack.toEpochTime(time)
-		};
-
-		const client = new AWS.CodeCommit();
-		let commitId = _.get(event, "detail.commitId");
-		if (!commitId && refType === "branch") {
-			try {
-				const res = await client.getBranch({
-					repositoryName: repoName,
-					branchName: refName
-				}).promise();
-				commitId = res.branch.commitId;
-			}
-			catch (err) {
-				console.error("repository.js: Failed to inspect branch:", err);
-				att.text = "Could not inspect repository. Check logs for stack trace.";
-			}
-		}
-		if (commitId) {
-			try {
-				const res2 = await client.getCommit({
-					repositoryName: repoName,
-					commitId: commitId,
-				}).promise();
-				att.text = res2.commit.message;
-			}
-			catch (err) {
-				console.error("repository.js: Failed to retrieve CodeCommit message:", err);
-				att.text = "Could not get message. Check logs for stack trace.";
-			}
-		}
-
-		return { attachments: [att] };
+	const color = event.COLORS.neutral;
+	let title = repoName;
+	if (repoEvent === "referenceCreated" && refType === "branch") {
+		title = `New branch created in repository ${repoName}`;
 	}
-}
+	else if (repoEvent === "referenceUpdated" && refType === "branch") {
+		title = `New commit pushed to repository ${repoName}`;
+	}
+	else if (repoEvent === "referenceDeleted" && refType === "branch") {
+		title = `Deleted branch in repository ${repoName}`;
+	}
+	else if (repoEvent === "referenceCreated" && refType === "tag") {
+		title = `New tag created in repository ${repoName}`;
+	}
+	else if (repoEvent === "referenceUpdated" && refType === "tag") {
+		title = `Tag reference modified in repository ${repoName}`;
+	}
+	else if (repoEvent === "referenceDeleted" && refType === "tag") {
+		title = `Deleted tag in repository ${repoName}`;
+	}
 
-module.exports = CodeCommitRepositoryParser;
+	if (repoName) {
+		fields.push({
+			title: "Repository",
+			value: repoName,
+			short: true,
+		});
+	}
+
+	if (refType) {
+		fields.push({
+			title: _.toUpper(refType.charAt(0)) + refType.slice(1),
+			value: refName,
+			short: true,
+		});
+	}
+
+	if (callerArn) {
+		fields.push({
+			title: "Caller ARN",
+			value: callerArn,
+		});
+	}
+
+	const client = new AWS.CodeCommit({
+		region: event.getRegion(),
+		httpOptions: { timeout: 5, connectTimeout: 1 }
+	});
+	let commitId = _.get(event, "detail.commitId");
+	let text;
+	if (!commitId && refType === "branch") {
+		try {
+			const res = await client.getBranch({
+				repositoryName: repoName,
+				branchName: refName
+			}).promise();
+			commitId = res.branch.commitId;
+		}
+		catch (err) {
+			console.error("repository.js: Failed to inspect branch:", err);
+			text = "Could not inspect repository. Check logs for stack trace.";
+		}
+	}
+	if (commitId) {
+		try {
+			const res = await client.getCommit({
+				repositoryName: repoName,
+				commitId: commitId,
+			}).promise();
+			text = res.commit.message;
+		}
+		catch (err) {
+			console.error("repository.js: Failed to retrieve CodeCommit message:", err);
+			text = "Could not get message. Check logs for stack trace.";
+		}
+	}
+
+	return event.attachmentWithDefaults({
+		author_name: "AWS CodeCommit",
+		fallback: `${repoName}: ${title}`,
+		color: color,
+		title: title,
+		title_link: repoUrl,
+		fields: fields,
+		mrkdwn_in: ["title", "text"],
+		text: text,
+	});
+};

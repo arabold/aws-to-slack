@@ -288,18 +288,16 @@ class AwsCloudWatchChart {
 	getTimeSlots() {
 		let toTime = 0;
 		let fromTime = +new Date();
-		let hasDataPoints = false;
-		_.each(this.metrics, m => {
-			if (m.datapoints.length) {
-				hasDataPoints = true;
-				const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
-				toTime = Math.max(_.max(dates), toTime);
-				fromTime = Math.min(_.min(dates), fromTime);
-			}
-		});
-		if (!hasDataPoints) {
+		const validDatapoints = _.filter(this.metrics, m => m.datapoints.length);
+		if (!validDatapoints.length) {
 			throw "No datapoints returned from CloudWatch, cannot render empty chart";
 		}
+
+		_.each(validDatapoints, m => {
+			const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
+			toTime = Math.max(_.max(dates), toTime);
+			fromTime = Math.min(_.min(dates), fromTime);
+		});
 		if (!fromTime || !toTime) {
 			throw "Cannot render a chart without timeframe";
 		}
@@ -320,22 +318,44 @@ class AwsCloudWatchChart {
 	}
 
 	/**
-	 * Generate a link to CloudWatch page filtering on logs for the given metric.
+	 * Generate a link to CloudWatch page filtering on logs for the first log-filter metric.
 	 *
-	 * @param {number|string} timestamp Time of message
+	 * @param {number|string|Date} timestamp Time of message
 	 * @param {string} [region] Region to set in link
-	 * @returns {string} The URL
+	 * @param {string} [logGroupName] Log group to link to, or empty to auto-discover
+	 * @returns {string|null} The URL
 	 */
-	getCloudWatchURL(timestamp, region) {
-		// Look up alarm, then metric filter, to get filter pattern so that we can generate a relevant cloudwatch link
-		const filterDef = _.get(this.metrics, "[0].filterDef");
-		if (!filterDef) {
+	getCloudWatchURL(timestamp, region, logGroupName) {
+		let filterPattern;
+
+		if (!logGroupName) {
+			// If is Lambda, link to logs by FunctionName
+			// eslint-disable-next-line lodash/chaining
+			const lambdaFunctionName = _.chain(this.metrics)
+				.find(["query.Namespace", "AWS/Lambda"])
+				.get("query.Dimensions")
+				.find(["Name", "FunctionName"])
+				.get("Value").value();
+			if (lambdaFunctionName) {
+				logGroupName = `/aws/lambda/${lambdaFunctionName}`;
+			}
+		}
+
+		if (!logGroupName) {
+			// If is Metric Filter, look up alarm definition and set pattern
+			const filterDef = _.get(this.metrics, "[0].filterDef");
+			if (filterDef) {
+				logGroupName = filterDef.logGroupName;
+				filterPattern = filterDef.filterPattern;
+			}
+		}
+
+		if (!logGroupName) {
 			return null;
 		}
-		const { filterPattern, logGroupName } = filterDef;
 
 		// Generates start and end time ISO strings one hour before to one hour after the supplied timestamp
-		const eventTime = new Date(timestamp);
+		const eventTime = _.isDate(timestamp) ? timestamp : new Date(timestamp);
 		eventTime.setUTCMinutes(0);
 		eventTime.setUTCSeconds(0);
 		eventTime.setUTCMilliseconds(0);
@@ -350,12 +370,11 @@ class AwsCloudWatchChart {
 			end: endTime.toISOString()
 		};
 
-		if (!region) {
-			region = "us-east-1";
-		}
-		return `https://console.aws.amazon.com/cloudwatch/home?region=${region}`
+		region = region ? `region=${region}` : "";
+
+		return `https://console.aws.amazon.com/cloudwatch/home?${region}`
 			+ `#logEventViewer:group=${encodeURIComponent(logGroupName)}`
-			+ `;filter=${encodeURIComponent(filterPattern)}`
+			+ (filterPattern ? `;filter=${encodeURIComponent(filterPattern)}` : "")
 			+ `;start=${logsTimeRange.start};end=${logsTimeRange.end}`;
 	}
 

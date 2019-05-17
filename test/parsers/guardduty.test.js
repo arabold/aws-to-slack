@@ -37,14 +37,9 @@ const simpleSnsPacket = {
 const mock = require("./_parser_mock").named("guardduty");
 mock.matchesEvent(simpleSnsPacket);
 
-test(`Parser[guardduty] will match event and provide detail`, async () => {
-
-	const result = await mock.makeNew().parse(simpleSnsPacket);
-
-	expect(result.attachments[0]).toMatchObject({
-		"author_name": "Amazon GuardDuty",
-        "color": "warning",
-		"fallback":"Unprotected port on EC2 instance i-blart is being probed. EC2 instance has an unprotected port which is being probed by a known malicious host.",
-		"title": "Unprotected port on EC2 instance i-blart is being probed.",
-	});
+mock.matchesEventWithDetail(simpleSnsPacket, {
+	"author_name": "Amazon GuardDuty",
+	"color": "warning",
+	"fallback":"Unprotected port on EC2 instance i-blart is being probed. EC2 instance has an unprotected port which is being probed by a known malicious host.",
+	"title": "Unprotected port on EC2 instance i-blart is being probed.",
 });

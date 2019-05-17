@@ -1,69 +1,56 @@
-"use strict";
+//
+// AWS CodeDeploy via CloudWatch event rule
+//
+exports.matches = event =>
+	event.getSource() === "codedeploy";
 
-const _ = require("lodash"),
-	Slack = require("../slack");
+exports.parse = event => {
+	const deployState = event.get("detail.state");
+	const deploymentGroup = event.get("detail.deploymentGroup");
+	const deploymentId = event.get("detail.deploymentId");
+	const app = event.get("detail.application");
+	const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.getRegion()}#/deployments/${deploymentId}`;
+	const fields = [];
 
-class CodeDeployParser {
+	let color = event.COLORS.neutral;
+	const baseTitle = `CodeDeploy Application ${app}`;
+	let title = baseTitle;
+	if (deployState === "SUCCESS") {
+		title = `<${statusUrl}|${baseTitle}> has finished`;
+		color = event.COLORS.ok;
+	}
+	else if (deployState === "STOP") {
+		title = `<${statusUrl}|${baseTitle}> was stopped`;
+		color = event.COLORS.warning;
+	}
+	else if (deployState === "FAILURE") {
+		title = `<${statusUrl}|${baseTitle}> has failed`;
+		color = event.COLORS.critical;
+	}
+	else if (deployState === "START") {
+		title = `<${statusUrl}|${baseTitle}> has started deploying`;
+	}
 
-	parse(event) {
-		if (_.get(event, "source") !== "aws.codedeploy") {
-			// Not of interest for us
-			return false;
-		}
-
-		const time = new Date(_.get(event, "time"));
-		const deployState = _.get(event, "detail.state");
-		const deploymentGroup = _.get(event, "detail.deploymentGroup");
-		const deploymentId = _.get(event, "detail.deploymentId");
-		const app = _.get(event, "detail.application");
-		const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.region}#/deployments/${deploymentId}`;
-		const fields = [];
-
-		let color = Slack.COLORS.neutral;
-		const baseTitle = `CodeDeploy Application ${app}`;
-		let title = baseTitle;
-		if (deployState === "SUCCESS") {
-			title = `<${statusUrl}|${baseTitle}> has finished`;
-			color = Slack.COLORS.ok;
-		}
-		else if (deployState === "STOP") {
-			title = `<${statusUrl}|${baseTitle}> was stopped`;
-			color = Slack.COLORS.warning;
-		}
-		else if (deployState === "FAILURE") {
-			title = `<${statusUrl}|${baseTitle}> has failed`;
-			color = Slack.COLORS.critical;
-		}
-		else if (deployState === "START") {
-			title = `<${statusUrl}|${baseTitle}> has started deploying`;
-		}
-
-		if (deployState) {
-			fields.push({
-				title: "Status",
-				value: deployState,
-				short: true
-			});
-		}
-
+	if (deployState) {
 		fields.push({
-			title: "DeploymentGroup",
-			value: `${deploymentGroup}`,
+			title: "Status",
+			value: deployState,
 			short: true
 		});
-
-		return {
-			attachments: [{
-				author_name: "AWS CodeDeploy Notification",
-				fallback: `${baseTitle} ${deployState}`,
-				color: color,
-				title: title,
-				fields: fields,
-				mrkdwn_in: ["title", "text"],
-				ts: Slack.toEpochTime(time)
-			}]
-		};
 	}
-}
 
-module.exports = CodeDeployParser;
+	fields.push({
+		title: "DeploymentGroup",
+		value: `${deploymentGroup}`,
+		short: true
+	});
+
+	return event.attachmentWithDefaults({
+		author_name: "AWS CodeDeploy Notification",
+		fallback: `${baseTitle} ${deployState}`,
+		color,
+		title,
+		fields,
+		mrkdwn_in: ["title", "text"],
+	});
+};
