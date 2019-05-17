@@ -6,10 +6,6 @@ jobs:
     docker:
       - image: circleci/node:8.10
     working_directory: ~/repo
-    environment:
-      # dummy env-vars so AWS-SDK gives up quickly
-      AWS_ACCES_KEY_ID: foo
-      AWS_SECRET_ACCESS_KEY: bar
 
     steps:
       - checkout
@@ -29,5 +25,6 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       # run tests!
-      - run: npm test
+      # dummy env-vars so AWS-SDK gives up quickly
+      - run: AWS_ACCES_KEY_ID=foo AWS_SECRET_ACCESS_KEY=bar npm test
       - run: npm run lint
