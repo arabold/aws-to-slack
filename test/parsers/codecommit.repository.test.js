@@ -32,3 +32,4 @@ console.error = jest.fn();
 require("./_parser_mock")
 	.named("codecommit/repository")
 	.matchesSnsMessage(example);
+
