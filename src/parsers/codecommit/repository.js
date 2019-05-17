@@ -65,7 +65,7 @@ exports.parse = async (event) => {
 		httpOptions: { timeout: 5, connectTimeout: 1 }
 	});
 	let commitId = _.get(event, "detail.commitId");
-	if (!commitId && refType === "branch") {
+	if (!commitId && refType === "branch" && repoEvent === "referenceUpdated") {
 		try {
 			const res = await client.getBranch({
 				repositoryName: repoName,
