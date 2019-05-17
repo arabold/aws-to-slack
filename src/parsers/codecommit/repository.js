@@ -76,7 +76,10 @@ exports.parse = async (event) => {
 		}
 		catch (err) {
 			console.error("repository.js: Failed to inspect branch:", err);
-			text = "Could not inspect repository. Check logs for stack trace.";
+			fields.push({
+				title: "Commit Message",
+				value: "Could not inspect repository. Check logs for stack trace.",
+			});
 		}
 	}
 	if (commitId) {
@@ -85,11 +88,17 @@ exports.parse = async (event) => {
 				repositoryName: repoName,
 				commitId: commitId,
 			}).promise();
-			text = res.commit.message;
+			fields.push({
+				title: "Commit Message",
+				value: res.commit.message,
+			});
 		}
 		catch (err) {
 			console.error("repository.js: Failed to retrieve CodeCommit message:", err);
-			text = "Could not get message. Check logs for stack trace.";
+			fields.push({
+				title: "Commit Message",
+				value: "Could not get message. Check logs for stack trace.",
+			});
 		}
 	}
 
@@ -101,6 +110,5 @@ exports.parse = async (event) => {
 		title_link: repoUrl,
 		fields: fields,
 		mrkdwn_in: ["title", "text"],
-		text: text,
 	});
 };
