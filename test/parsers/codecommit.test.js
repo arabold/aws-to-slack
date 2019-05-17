@@ -23,6 +23,12 @@ const example = {
 	}
 };
 
+// Configure aws-sdk to fail-fast
+const AWS = require('aws-sdk');
+AWS.config.credentials = new AWS.Credentials({ accessKeyId: "foo", secretAccessKey: "bar" });
+// Mock console.error to hide expected errors
+console.error = jest.fn();
+
 require("./_parser_mock")
 	.named("codecommit/repository")
 	.matchesSnsMessage(example);

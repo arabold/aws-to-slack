@@ -25,6 +25,5 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       # run tests!
-      # dummy env-vars so AWS-SDK gives up quickly
-      - run: AWS_ACCES_KEY_ID=foo AWS_SECRET_ACCESS_KEY=bar npm test
+      - run: npm test
       - run: npm run lint
