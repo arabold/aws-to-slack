@@ -1,11 +1,13 @@
 //
 // AWS CodeCommit: Repository change event
 //
+const AWS = require("aws-sdk");
+
 exports.matches = event =>
 	event.getSource() === "codecommit"
 	&& _.get(event.message, "detail-type") === "CodeCommit Repository State Change";
 
-exports.parse = event => {
+exports.parse = async (event) => {
 	const callerArn = event.get("detail.callerUserArn");
 	const refName = event.get("detail.referenceName");
 	const refType = event.get("detail.referenceType");
@@ -58,6 +60,36 @@ exports.parse = event => {
 		});
 	}
 
+	const client = new AWS.CodeCommit();
+	let commitId = _.get(event, "detail.commitId");
+	let text;
+	if (!commitId && refType === "branch") {
+		try {
+			const res = await client.getBranch({
+				repositoryName: repoName,
+				branchName: refName
+			}).promise();
+			commitId = res.branch.commitId;
+		}
+		catch (err) {
+			console.error("repository.js: Failed to inspect branch:", err);
+			text = "Could not inspect repository. Check logs for stack trace.";
+		}
+	}
+	if (commitId) {
+		try {
+			const res = await client.getCommit({
+				repositoryName: repoName,
+				commitId: commitId,
+			}).promise();
+			text = res.commit.message;
+		}
+		catch (err) {
+			console.error("repository.js: Failed to retrieve CodeCommit message:", err);
+			text = "Could not get message. Check logs for stack trace.";
+		}
+	}
+
 	return event.attachmentWithDefaults({
 		author_name: "AWS CodeCommit",
 		fallback: `${repoName}: ${title}`,
@@ -66,5 +98,6 @@ exports.parse = event => {
 		title_link: repoUrl,
 		fields: fields,
 		mrkdwn_in: ["title", "text"],
+		text: text,
 	});
 };
