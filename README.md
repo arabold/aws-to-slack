@@ -46,16 +46,16 @@ Supported AWS product notification formats:
 Additional formats will be added. Pull Requests are welcome!
 
 ## Try!
-Ready to try it for yourself? Installation into your own AWS environment is as
-simple as pressing the button below (for installation outside of `us-east-1` see details below):
+Ready to try the latest version for yourself? Installation into your own AWS environment is simple:
 
-**THIS LINK DOES NOT MATCH MASTER BRANCH!** We have been adding more event types and fixing bugs, but this link uses an old template. Pending a 2.0 release, please manually create a CloudFormation stack by **uploading the `cloudformation.yaml` from master branch!**
-
-> [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-east-1/cloudformation.yaml)
+* Go to [AWS Console's Create New Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
+* Copy the content from [cloudformation.yaml](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) into a local file
+* Upload the file to the AWS Console
+* For details on the parameter values, see Installation section
 
 ## Installation
 
-### Step 1 - Setup Slack
+### Step 1: Setup Slack
 The Lambda function communicates with Slack through a Slack webhook
 [webhook](https://your-slack-domain.slack.com/apps/manage). Note that you can either create an app, or a custom integration > Incoming webhook (easier, will only let you add a webhook)
 
@@ -69,32 +69,12 @@ The Lambda function communicates with Slack through a Slack webhook
 
 ![Slack Configuration](./docs/config-slack.png)
 
-### Step 2 - Configure & Launch the CloudFormation Stack
+### Step 2: Configure & Launch the CloudFormation Stack
 
 Note that the AWS region will be the region from which you launch the CloudFormation wizard, which will also scope the resources (SNS, etc.) to that region. 
 
 Launch the CloudFormation Stack by using our preconfigured CloudFormation
-[template](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) or
-by simply pressing the following button:
-
-| Region | Launch Stack |
-|--------|--------------|
-| us-east-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-east-1/cloudformation.yaml) |
-| us-east-2 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-east-2/cloudformation.yaml) |
-| us-west-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-west-1/cloudformation.yaml) |
-| us-west-2 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-us-west-2/cloudformation.yaml) |
-| ap-northeast-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ap-northeast-1/cloudformation.yaml) |
-| ap-northeast-2 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ap-northeast-2/cloudformation.yaml) |
-| ap-south-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ap-south-1/cloudformation.yaml) |
-| ap-southeast-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ap-southeast-1/cloudformation.yaml) |
-| ap-southeast-2 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ap-southeast-2/cloudformation.yaml) |
-| ca-central-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-ca-central-1/cloudformation.yaml) |
-| eu-central-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-eu-central-1/cloudformation.yaml) |
-| eu-west-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-eu-west-1/cloudformation.yaml) |
-| eu-west-2 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-eu-west-2/cloudformation.yaml) |
-| eu-west-3 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-eu-west-3/cloudformation.yaml) |
-| sa-east-1 | [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=aws-to-slack&templateURL=https://s3.amazonaws.com/aws-to-slack-sa-east-1/cloudformation.yaml) |
-
+[template](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) and following the [steps above](#try).
 
 **Afterwards**
 
@@ -107,7 +87,7 @@ different channel to post to if wanted.
 Click "Next" again, complete the stack setup on the following pages and
 finally launch your stack.
 
-### Step 3 - Subscribe to Triggers
+### Step 3: Subscribe to Triggers
 
 Before the Lambda function will actually do anything you need to subscribe it
 to actual CloudWatch alarms and other SNS triggers. Open up the AWS Lambda,
