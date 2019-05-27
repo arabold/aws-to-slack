@@ -21,11 +21,11 @@
     "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "aws-sdk": "^2.384.0",
-    "eslint": "^5.12.0",
-    "eslint-plugin-import": "^2.14.0",
+    "aws-sdk": "^2.463.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-lodash": "^2.7.0",
-    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-promise": "^4.1.1",
     "jest": "^23.6.0"
   }
 }
