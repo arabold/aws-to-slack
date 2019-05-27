@@ -26,13 +26,13 @@ function shouldDecryptBlob(blob, isValid) {
 			&& (!isValid || isValid(blob))
 		) {
 			const kmsClient = new AWS.KMS();
-			kmsClient.decrypt({ CiphertextBlob: blob }, (err, data) => {
+			kmsClient.decrypt({ CiphertextBlob: new Buffer(blob, 'base64') }, (err, data) => {
 				if (err) {
 					console.error("Error decrypting (using as-is):", err);
 					resolve(blob);
 				}
 				else {
-					resolve(data.Plaintext);
+					resolve(data.Plaintext.toString('ascii'));
 				}
 			});
 		}
