@@ -48,10 +48,15 @@ Additional formats will be added. Pull Requests are welcome!
 ## Try!
 Ready to try the latest version for yourself? Installation into your own AWS environment is simple:
 
-* Go to [AWS Console's Create New Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
-* Copy the content from [cloudformation.yaml](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) into a local file
-* Upload the file to the AWS Console
-* For details on the parameter values, see Installation section
+1. Go to [AWS Console's Create New Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
+
+    [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
+
+2. Copy the content from [cloudformation.yaml](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) into a local file
+
+3. Upload the file to the AWS Console
+
+4. For details on the parameter values, see Installation section
 
 ## Installation
 
