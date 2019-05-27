@@ -26,6 +26,6 @@
     "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-promise": "^4.1.1",
-    "jest": "^23.6.0"
+    "jest": "^24.8.0"
   }
 }
