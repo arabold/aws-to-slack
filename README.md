@@ -7,9 +7,16 @@
 
 Forward AWS CloudWatch Alarms and other notifications from Amazon SNS to Slack.
 
-![CloudWatch Alarm Example](./docs/alert-example-cw.png)
-
-![Elastic Beanstalk Example](./docs/alert-example-eb.png)
+<table>
+   <tr>
+      <th>CloudWatch Example</th>
+      <th>EB Event Example</th>
+   </tr>
+   <tr>
+      <td width="50%"><img alt="CloudWatch Alarm Example" src="./docs/alert-example-cw.png"></td>
+      <td><img alt="Elastic Beanstalk Example" src="./docs/alert-example-eb.png"></td>
+   </tr>
+</table>
 
 ## What is it?
 _AWS-to-Slack_ is a Lambda function written in Node.js that forwards alarms and
