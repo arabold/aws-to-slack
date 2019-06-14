@@ -287,25 +287,36 @@ class AwsCloudWatchChart {
 	 */
 	getTimeSlots() {
 		let toTime = 0;
-		let fromTime = +new Date();
+		let fromTime = Date.now();
 		const validDatapoints = _.filter(this.metrics, m => m.datapoints.length);
 		if (!validDatapoints.length) {
 			throw "No datapoints returned from CloudWatch, cannot render empty chart";
 		}
 
 		_.each(validDatapoints, m => {
-			const dates = _.map(m.datapoints, s => +new Date(s.Timestamp));
+			// Turn strings into MsEpoch numbers, excluding un-parsable values
+			const dates = _.compact(_.map(m.datapoints, s => +new Date(s.Timestamp)));
 			toTime = Math.max(_.max(dates), toTime);
 			fromTime = Math.min(_.min(dates), fromTime);
 		});
-		if (!fromTime || !toTime) {
+		if (fromTime < 99 || toTime < 99) { // should be very large numbers
 			throw "Cannot render a chart without timeframe";
+		}
+
+		let chartSamples = this.chartSamples;
+		if (fromTime === toTime) {
+			// expand to 10min by adding/subtracting 5min
+			fromTime -= 5 * 60 * 1000;
+			// never extend into the future
+			toTime = Math.min(Date.now(), toTime + 5 * 60 * 1000);
+			// with only one data point, lower the number of samples
+			chartSamples = Math.min(10, chartSamples);
 		}
 
 		const timeSlots = [];
 		for (let i = fromTime; i <= toTime;) {
 			const from = i;
-			i += ((toTime - fromTime) / this.chartSamples);
+			i += ((toTime - fromTime) / chartSamples);
 			const to = i;
 			const d = new Date(to);
 			timeSlots.push({
