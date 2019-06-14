@@ -305,7 +305,7 @@ class AwsCloudWatchChart {
 		const timeSlots = [];
 		for (let i = fromTime; i <= toTime;) {
 			const from = i;
-			i += ((toTime - fromTime) / this.chartSamples);
+			i += Math.max(1,((toTime - fromTime) / this.chartSamples));
 			const to = i;
 			const d = new Date(to);
 			timeSlots.push({
