@@ -6,6 +6,9 @@ const ToAddresses = _.compact(_.map(
 	_.split(process.env.EMAIL_LIST, ",")
 	, a => _.trim(a)));
 
+//TODO: use CloudWatch Image API to turn graphs into attachments
+//@see https://aws.amazon.com/blogs/devops/reduce-time-to-resolution-with-amazon-cloudwatch-snapshot-graphs-and-alerts/
+
 /**
  * Send as email if environment is configured.
  *
