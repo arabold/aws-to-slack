@@ -48,15 +48,32 @@ Additional formats will be added. Pull Requests are welcome!
 ## Try!
 Ready to try the latest version for yourself? Installation into your own AWS environment is simple:
 
-1. Go to [AWS Console's Create New Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
+### Option 1: Quick Start (OLD CODE)
 
-    [![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
+[![Launch CloudFormation Stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack)
 
-2. Copy the content from [cloudformation.yaml](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) into a local file
+*Warning!* The template referenced by this link is an old template and old code! If you want the latest version of this repo, you need to update the Lambda code after it's launched.
+      
+### Option 2: Get the latest bug fixes
 
-3. Upload the file to the AWS Console
+1. Download this repo locally.
 
-4. For details on the parameter values, see Installation section
+1. Use AWS Console's [Create CloudFormation Stack](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=aws-to-slack) tool.
+
+   Upload [cloudformation.yaml](https://raw.githubusercontent.com/arabold/aws-to-slack/master/cloudformation.yaml) as your template.
+
+1. Finish launching the Stack.
+
+   For details on the parameter values, see [Installation](#installation) section. 
+
+1. Build / Update the code by running the following from the root of this project:
+   ```
+   AWS_REGION="<your_lambda_region>" LAMBDA_NAME="<your_lambda_name>" make deploy
+   ```  
+
+### Option 3: Use deploy target
+
+See [Managing Multiple Deployments](#managing-multiple-deployments) for a `.env` file approach to creating or managing multiple stacks.
 
 ## Installation
 
