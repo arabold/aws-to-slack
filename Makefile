@@ -61,7 +61,7 @@ create-stack: create-stack-raw
 	$(eval STACK_ID := $(shell aws cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
 		$(regionArg) --output text --query 'Stacks[0].StackId' ))
 	@echo "Add to your .env file: STACK_ID=$(STACK_ID)"
-	@ [ -z "$(TARGET)" ] || echo -e "# Makefile on `date`\nSTACK_ID=$(STACK_ID)" >> "$(TARGET)"
+	@ [ -z "$(TARGET)" ] || { echo "# Makefile on `date`" >> "$(TARGET)"; echo "STACK_ID=$(STACK_ID)" >> "$(TARGET)"; }
 
 
 # Update CloudFormation stack
@@ -79,7 +79,7 @@ load-lambda-name:
 	$(eval LAMBDA_NAME := $(shell aws cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
 		$(regionArg) --output text --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunction`].OutputValue'))
 	@echo "Add to your .env file: LAMBDA_NAME=$(LAMBDA_NAME)"
-	@ [ -z "$(TARGET)" ] || echo -e "# Makefile on `date`\nLAMBDA_NAME=$(LAMBDA_NAME)" >> "$(TARGET)"
+	@ [ -z "$(TARGET)" ] || { echo "# Makefile on `date`" >> "$(TARGET)"; echo "LAMBDA_NAME=$(LAMBDA_NAME)" >> "$(TARGET)"; }
 
 
 # Update existing Lambda function
