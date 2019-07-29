@@ -156,3 +156,8 @@ Outputs:
   LambdaFunction:
     Description: 'Lambda function name created by this stack.'
     Value: !Ref Function
+  LambdaFunctionARN:
+    Description: 'Lambda function ARN created by this stack.'
+    Value: !GetAtt Function.Arn
+    Export:
+      Name: aws-to-slack-arn
