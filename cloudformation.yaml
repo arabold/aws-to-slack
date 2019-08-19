@@ -160,4 +160,4 @@ Outputs:
     Description: 'Lambda function ARN created by this stack.'
     Value: !GetAtt Function.Arn
     Export:
-      Name: aws-to-slack-arn
+      Name: !Sub 'aws-to-slack-channel-${Channel}-FunctionArn'
