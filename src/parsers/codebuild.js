@@ -10,7 +10,7 @@ exports.parse = event => {
 	const region = event.get("region");
 	const logsUrl = `https://console.aws.amazon.com/cloudwatch/home?region=${region}#logEventViewer:group=/aws/codebuild/${project};start=PT5M`;
 	const buildId = _.split(event.get("detail.build-id"), ":").pop();
-	const buildUrl = `https://console.aws.amazon.com/codebuild/home?region=${region}#/builds/${encodeURIComponent(project + ":" + buildId)}/view/new`;
+	const buildUrl = `https://console.aws.amazon.com/codesuite/codebuild/projects/${project}/build/${encodeURIComponent(project + ":" + buildId)}/?region=${region}`;
 
 	const author_name = "AWS CodeBuild"
 		+ (event.getAccountId() ? ` (${event.getAccountId()})` : "");
