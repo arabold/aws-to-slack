@@ -79,9 +79,9 @@ See [Managing Multiple Deployments](#managing-multiple-deployments) for a `.env`
 
 ### Step 1: Setup Slack
 The Lambda function communicates with Slack through a Slack webhook
-[webhook](https://your-slack-domain.slack.com/apps/manage). Note that you can either create an app, or a custom integration > Incoming webhook (easier, will only let you add a webhook)
+[webhook](https://my.slack.com/apps/manage). Note that you can either create an app, or a custom integration > Incoming webhook (easier, will only let you add a webhook)
 
-1. Navigate to https://your-slack-domain.slack.com/apps/manage and click
+1. Navigate to https://my.slack.com/apps/manage and click
    "Add Configuration".
 2. Choose the default channel where messages will be sent and click
    "Add Incoming WebHooks Integration".
