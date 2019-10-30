@@ -67,3 +67,13 @@ test(`EventDef falls back to SNS details`, async () => {
 	expect(result.getRegion()).toEqual("region");
 	expect(result.getSource()).toEqual("foobar");
 });
+
+test(`EventDef creates console links`, () => {
+	const evt = new EventDef({
+		Records: [ { region: "us-west-7" }]
+	});
+	expect(evt.consoleUrl("/foo")).toEqual("https://console.aws.amazon.com/foo?region=us-west-7");
+	expect(evt.consoleUrl("/ec2/home#goal:7")).toEqual("https://console.aws.amazon.com/ec2/home?region=us-west-7#goal:7");
+	expect(evt.consoleUrl("/ec2/home?region=us-west-1#goal:7")).toEqual("https://console.aws.amazon.com/ec2/home?region=us-west-1#goal:7");
+	expect(evt.getLink("Test text", "https://example.com").toString()).toEqual("<https://example.com|Test text>");
+});

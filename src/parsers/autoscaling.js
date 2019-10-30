@@ -20,7 +20,7 @@ exports.parse = event => {
 	}
 
 	const signInLink = `https://${accountId}.signin.aws.amazon.com/console/ec2?region=${region}`;
-	const consoleLink = `https://console.aws.amazon.com/ec2/autoscaling/home?region=${region}#AutoScalingGroups:id=${groupName}`;
+	const consoleLink = event.consoleUrl(`/ec2/autoscaling/home#AutoScalingGroups:id=${groupName}`);
 
 	const text = `Auto Scaling triggered ${eventName} for service ${service}.`;
 

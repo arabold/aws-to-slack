@@ -38,9 +38,9 @@ exports.parse = event => {
 	const color = _.get(statusMappings, `${resourceStatus}.color`);
 
 	// Example StackId: arn:aws:cloudformation:{region}:{accountId}:stack/${stackName}/{stackUuid}
-	const region = event.parseArn(stackId).region || "us-east-1";
+	const region = event.parseArn(stackId).region || event.getRegion();
 	const encodedStackId = encodeURIComponent(stackId);
-	const consoleLink = `https://console.aws.amazon.com/cloudformation/home?region=${region}#stacks/${encodedStackId}/events`;
+	const consoleLink = event.consoleUrl(`/cloudformation/home?region=${region}#stacks/${encodedStackId}/events`);
 
 	return event.attachmentWithDefaults({
 		author_name: "AWS CloudFormation",
