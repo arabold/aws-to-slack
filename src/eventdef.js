@@ -255,7 +255,7 @@ class SlackLink {
 	constructor(url, text) {
 		this.url = url;
 		this.text = text;
-		this.willPrintLink = /true|1/i.test(process.env.HIDE_AWS_LINKS || "");
+		this.willPrintLink = !/true|1/i.test(process.env.HIDE_AWS_LINKS || "");
 	}
 
 	/**
