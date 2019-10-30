@@ -14,7 +14,7 @@ exports.parse = event => {
 	const action = event.get("detail.action", "UNKNOWN");
 	const fields = [];
 
-	const title_link = event.consoleLink(`/codepipeline/home#/view/${pipeline}`);
+	const title_link = event.consoleUrl(`/codepipeline/home#/view/${pipeline}`);
 	let author_name = "AWS CodePipeline";
 	let text = type;
 

@@ -13,7 +13,7 @@ exports.parse = event => {
 
 	const baseTitle = event.getLink(
 		`CodeDeploy Application ${app}`,
-		event.consoleLink(`/codedeploy/home#/deployments/${deploymentId}`)
+		event.consoleUrl(`/codedeploy/home#/deployments/${deploymentId}`)
 	).toString();
 
 	let color = event.COLORS.neutral;

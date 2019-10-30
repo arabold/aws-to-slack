@@ -54,7 +54,7 @@ exports.parse = async event => {
 		color: color,
 		author_name: `AWS CloudWatch Alarm (${accountId})`,
 		title: alarmName,
-		title_link: event.consoleLink(`/cloudwatch/home?region=${region}#alarm:name=${alarmName}`),
+		title_link: event.consoleUrl(`/cloudwatch/home?region=${region}#alarm:name=${alarmName}`),
 		text,
 		fields: [{
 			title: "State Change",
