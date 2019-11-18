@@ -71,6 +71,11 @@ Ready to try the latest version for yourself? Installation into your own AWS env
    AWS_REGION="<your_lambda_region>" LAMBDA_NAME="<your_lambda_name>" make deploy
    ```  
 
+   If you use AWS CLI profiles, simply add `AWS_PROFILE` to the make command like so:
+   ```
+   AWS_PROFILE="my-profile" AWS_REGION="<your_lambda_region>" LAMBDA_NAME="<your_lambda_name>" make deploy
+   ```
+
 ### Option 3: Use deploy target
 
 See [Managing Multiple Deployments](#managing-multiple-deployments) for a `.env` file approach to creating or managing multiple stacks.
