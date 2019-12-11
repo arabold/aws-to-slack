@@ -41,16 +41,20 @@ exports.parse = async event => {
 		console.log("Error rendering chart:", err);
 	}
 
-	const text = logsUrl
-		? `${reason} (<${logsUrl}|See recent logs>)`
-		: reason;
+	let text = reason;
+	if (logsUrl) {
+		const logsLink = event.getLink("See recent logs", logsUrl);
+		if (logsLink.willPrintLink) {
+			text = `${reason} (${logsLink})`;
+		}
+	}
 
 	return event.attachmentWithDefaults({
 		fallback: `${alarmName} state is now ${newState}:\n${reason}`,
 		color: color,
 		author_name: `AWS CloudWatch Alarm (${accountId})`,
 		title: alarmName,
-		title_link: `https://console.aws.amazon.com/cloudwatch/home?region=${region}#alarm:name=${alarmName}`,
+		title_link: event.consoleUrl(`/cloudwatch/home?region=${region}#alarm:name=${alarmName}`),
 		text,
 		fields: [{
 			title: "State Change",

@@ -69,8 +69,18 @@ function objectToFields(obj) {
 		fields = [];
 		for (const key of keys) {
 			let val = obj[key];
+			if (key === "version" && !val) {
+				// the "version" key is included in a lot of events and it's not super helpful
+				continue;
+			}
 			if (!_.isString(val)) {
-				val = JSON.stringify(val);
+				// pull first string from array
+				if (_.isArray(val) && val.length === 1 && _.isString(val[0])) {
+					val = val[0];
+				}
+				else {
+					val = JSON.stringify(val);
+				}
 			}
 			fields.push({
 				title: key,

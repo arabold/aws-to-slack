@@ -13,7 +13,7 @@ exports.parse = event => {
 	const pullRequestMerged = event.get("detail.isMerged");
 	const pullRequestStatus = event.get("detail.pullRequestStatus");
 	const pullRequestTitle = event.get("detail.title");
-	const pullRequestUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.get("region")}#/repository/${repoName}/pull-request/${pullRequestId}`;
+	const pullRequestUrl = event.consoleUrl(`/codecommit/home#/repository/${repoName}/pull-request/${pullRequestId}`);
 	const fields = [];
 
 	let color = event.COLORS.neutral;

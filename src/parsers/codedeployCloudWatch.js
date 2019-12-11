@@ -9,26 +9,29 @@ exports.parse = event => {
 	const deploymentGroup = event.get("detail.deploymentGroup");
 	const deploymentId = event.get("detail.deploymentId");
 	const app = event.get("detail.application");
-	const statusUrl = `https://console.aws.amazon.com/codedeploy/home?region=${event.getRegion()}#/deployments/${deploymentId}`;
 	const fields = [];
 
+	const baseTitle = event.getLink(
+		`CodeDeploy Application ${app}`,
+		event.consoleUrl(`/codedeploy/home#/deployments/${deploymentId}`)
+	).toString();
+
 	let color = event.COLORS.neutral;
-	const baseTitle = `CodeDeploy Application ${app}`;
 	let title = baseTitle;
 	if (deployState === "SUCCESS") {
-		title = `<${statusUrl}|${baseTitle}> has finished`;
+		title = `${baseTitle} has finished`;
 		color = event.COLORS.ok;
 	}
 	else if (deployState === "STOP") {
-		title = `<${statusUrl}|${baseTitle}> was stopped`;
+		title = `${baseTitle} was stopped`;
 		color = event.COLORS.warning;
 	}
 	else if (deployState === "FAILURE") {
-		title = `<${statusUrl}|${baseTitle}> has failed`;
+		title = `${baseTitle} has failed`;
 		color = event.COLORS.critical;
 	}
 	else if (deployState === "START") {
-		title = `<${statusUrl}|${baseTitle}> has started deploying`;
+		title = `${baseTitle} has started deploying`;
 	}
 
 	if (deployState) {

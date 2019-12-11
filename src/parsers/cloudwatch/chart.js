@@ -436,6 +436,7 @@ class AwsCloudWatchChart {
 				case "Maximum": return _.max(points);
 				case "Minimum": return _.min(points);
 				case "Average": return _.sum(points) / (points.length || 1);
+				case "SampleCount":
 				case "Sum": return _.sum(points);
 				default: return null;
 				}
@@ -537,7 +538,13 @@ class AwsCloudWatchChartMetric {
 		}
 		else {
 			// Format for Statistics is {upper-case-letter}{lower-case-word}
-			this.query.Statistics = _.map(stats, s => _.upperFirst(_.toLower(s)));
+			this.query.Statistics = _.map(stats, s => {
+				const lower = _.toLower(s);
+				if (lower === "samplecount") {
+					return "SampleCount"; // fix capitalization
+				}
+				return _.upperFirst(lower);
+			});
 		}
 	}
 

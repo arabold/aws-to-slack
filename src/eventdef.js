@@ -137,6 +137,70 @@ class EventDef {
 	}
 
 	/**
+	 * Output a link.
+	 *
+	 * @param {string} text Text to display
+	 * @param {string} url Partial or full URL
+	 * @returns {SlackLink} Object with toString() method
+	 */
+	getLink(text, url) {
+		return new SlackLink(url, text);
+	}
+
+	/**
+	 * Convenience function to normalize a path into
+	 * a fully-qualified AWS Console URL.
+	 *
+	 * @param {string} path Path to AWS tool
+	 * @returns {string} Normalized AWS Console link
+	 */
+	consoleUrl(path) {
+		// all links should include a region parameter
+		const hasRegion = /[&?]region=(\w[\w-]+)/.exec(path) ? RegExp.$1 : "";
+		const region = hasRegion || this.getRegion("");
+
+		// ensure link contains scheme + domain
+		let url = String(path);
+		if (_.startsWith(url, "//")) {
+			url = "https:" + url;
+		}
+		else if (_.startsWith(url, "/")) {
+			if (_.startsWith(region, "cn-")) {
+				url = "https://console.amazonaws.cn" + url;
+			}
+			else {
+				url = "https://console.aws.amazon.com" + url;
+			}
+		}
+
+		if (!hasRegion && region) {
+			const _urllib = require("url");
+			const u = _urllib.parse(url);
+			if (u) {
+				const qs = require("querystring");
+				let hasRegion = false,
+					qsObj = {};
+				if (u.query) {
+					qsObj = qs.parse(u.query) || {};
+					if (qsObj.region) {
+						hasRegion = true;
+					}
+				}
+				if (!hasRegion) {
+					// add region and re-generate link
+					qsObj.region = region;
+					url = `${u.protocol}//${u.host}${u.pathname||""}?${qs.stringify(qsObj)}${u.hash||""}`;
+				}
+			}
+			else {
+				console.error(`event.consoleUrl(): given unparsable path: ${path}`);
+			}
+		}
+
+		return url;
+	}
+
+	/**
 	 * Fill default info and return a valid Slack message.
 	 *
 	 * @param {{}} attachment Attachment definition
@@ -158,19 +222,21 @@ class EventDef {
 				const arn = this.parseArn(snsArn);
 				// separate topic from subscription
 				const topic = _.split(arn.suffix, ":")[0];
-				const url = `https://console.aws.amazon.com/sns/v2/home?region=${arn.region}#/topics/arn:aws:sns:${arn.region}:${arn.account}:${topic}`;
+				const url = this.consoleUrl(`/sns/v2/home?region=${arn.region}#/topics/arn:aws:sns:${arn.region}:${arn.account}:${topic}`);
 				const signin = `https://${arn.account}.signin.aws.amazon.com/console/sns?region=${arn.region}`;
 				// limit visible length of topic
 				const topicVisible = topic.length > 40
 					? topic.substr(0, 35) + "..."
 					: topic;
 
-				attachment.footer = `Received via <${url}|SNS ${topicVisible}> | <${signin}|Sign-In>`;
+				const snsLink = this.getLink(`SNS ${topicVisible}`, url);
+				const signinLink = this.getLink("Sign-In", signin);
+				attachment.footer = `Received via ${snsLink} | ${signinLink}`;
 
 				// footer is limited to 300 chars, seemingly including URLs
 				// https://api.slack.com/docs/message-attachments#footer
 				if (attachment.footer.length > 300) {
-					attachment.footer = `Received via <${url}|SNS ${topicVisible}>`;
+					attachment.footer = `Received via ${snsLink}`;
 				}
 			}
 		}
@@ -178,6 +244,29 @@ class EventDef {
 		return {
 			attachments: [ attachment ],
 		};
+	}
+}
+
+class SlackLink {
+	/**
+	 * @param {string} url Full URL with protocol
+	 * @param {string} text Text to display
+	 */
+	constructor(url, text) {
+		this.url = url;
+		this.text = text;
+		this.willPrintLink = !/true|1/i.test(process.env.HIDE_AWS_LINKS || "");
+	}
+
+	/**
+	 * Get Slack-syntax link as a string.
+	 * @returns {string} Slack-formatted link
+	 */
+	toString() {
+		if (!this.willPrintLink) {
+			return this.text;
+		}
+		return `<${this.url}|${this.text}>`;
 	}
 }
 

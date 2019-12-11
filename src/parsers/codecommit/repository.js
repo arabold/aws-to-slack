@@ -13,7 +13,7 @@ exports.parse = async (event) => {
 	const refType = event.get("detail.referenceType");
 	const repoName = event.get("detail.repositoryName");
 	const repoEvent = event.get("detail.event");
-	const repoUrl = `https://console.aws.amazon.com/codecommit/home?region=${event.get("region")}#/repository/${repoName}`;
+	const repoUrl = event.consoleUrl(`/codecommit/home#/repository/${repoName}`);
 	const fields = [];
 
 	const color = event.COLORS.neutral;

@@ -12,6 +12,9 @@ endif
 ifdef AWS_REGION
   regionArg= --region $(AWS_REGION)
 endif
+ifdef AWS_PROFILE
+  awsProfile= --profile $(AWS_PROFILE)
+endif
 ifndef LAMBDA_NAME
   ifndef STACK_ID
   usesLambdaName := create-stack load-lambda-name
@@ -49,25 +52,25 @@ package:
 .PHONY: create-stack-raw
 create-stack-raw:
 	# Create CloudFormation Stack
-	aws cloudformation create-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
+	aws $(awsProfile) cloudformation create-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
 		$(regionArg) --capabilities CAPABILITY_IAM --parameters $(STACK_PARAMS)
-	aws cloudformation wait stack-create-complete --stack-name "$(STACK_NAME)" $(regionArg)
+	aws $(awsProfile) cloudformation wait stack-create-complete --stack-name "$(STACK_NAME)" $(regionArg)
 
 
 # Create the stack, print output, and save to TARGET file
 #  (must be separate from create-stack-raw because uses $(shell ...)
 .PHONY: create-stack
 create-stack: create-stack-raw
-	$(eval STACK_ID := $(shell aws cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
+	$(eval STACK_ID := $(shell aws $(awsProfile) cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
 		$(regionArg) --output text --query 'Stacks[0].StackId' ))
 	@echo "Add to your .env file: STACK_ID=$(STACK_ID)"
-	@ [ -z "$(TARGET)" ] || echo -e "# Makefile on `date`\nSTACK_ID=$(STACK_ID)" >> "$(TARGET)"
+	@ [ -z "$(TARGET)" ] || { echo "# Makefile on `date`" >> "$(TARGET)"; echo "STACK_ID=$(STACK_ID)" >> "$(TARGET)"; }
 
 
 # Update CloudFormation stack
 .PHONY: update-stack
 update-stack:
-	aws cloudformation update-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
+	aws $(awsProfile) cloudformation update-stack --stack-name "$(STACK_NAME)" --template-body file://cloudformation.yaml \
 			$(regionArg) --capabilities CAPABILITY_IAM --parameters $(STACK_PARAMS)
 
 
@@ -76,17 +79,17 @@ update-stack:
 load-lambda-name:
 	# Load Lambda name from CloudFormation
 	@if [ -z "$(STACK_NAME)" ]; then echo "Var STACK_NAME must be defined"; exit 1; fi;
-	$(eval LAMBDA_NAME := $(shell aws cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
+	$(eval LAMBDA_NAME := $(shell aws $(awsProfile) cloudformation describe-stacks --stack-name "$(STACK_NAME)" \
 		$(regionArg) --output text --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunction`].OutputValue'))
 	@echo "Add to your .env file: LAMBDA_NAME=$(LAMBDA_NAME)"
-	@ [ -z "$(TARGET)" ] || echo -e "# Makefile on `date`\nLAMBDA_NAME=$(LAMBDA_NAME)" >> "$(TARGET)"
+	@ [ -z "$(TARGET)" ] || { echo "# Makefile on `date`" >> "$(TARGET)"; echo "LAMBDA_NAME=$(LAMBDA_NAME)" >> "$(TARGET)"; }
 
 
 # Update existing Lambda function
 .PHONY: deploy
 deploy: $(usesReleaseZip) $(usesLambdaName)
 	# Update Lambda function code
-	aws lambda update-function-code --function-name "$(LAMBDA_NAME)" \
+	aws $(awsProfile) lambda update-function-code --function-name "$(LAMBDA_NAME)" \
 		$(regionArg) --zip-file "fileb://$(RELEASE_ZIP)" --publish
 
 
@@ -100,5 +103,5 @@ REGIONS ?= \
 .PHONY: publish
 publish: $(usesReleaseZip) $(REGIONS)
 $(REGIONS):
-	aws s3 cp "./cloudformation.yaml" "s3://aws-to-slack-$@" --acl public-read
-	aws s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-$@" --acl public-read
+	aws $(awsProfile) s3 cp "./cloudformation.yaml" "s3://aws-to-slack-$@" --acl public-read
+	aws $(awsProfile) s3 cp "$(RELEASE_ZIP)" "s3://aws-to-slack-$@" --acl public-read
