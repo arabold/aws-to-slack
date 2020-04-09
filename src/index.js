@@ -20,6 +20,9 @@ const _ = require("lodash")
 		"guardduty",
 		"inspector",
 		"rds",
+		"ecs-event",
+		"ses-bounce",
+		"ses-complaint",
 		"ses-received",
 		// Last attempt to parse, will match any message:
 		"generic",

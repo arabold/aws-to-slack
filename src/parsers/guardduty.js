@@ -236,12 +236,12 @@ exports.parse = event => {
 		});
 	}
 
-	let color = event.COLORS.neutral;
-	if (severity === 1) {
-		color = event.COLORS.critical;
-	}
-	else if (severity === 2) {
+	let color = event.COLORS.neutral; //low severity below 4
+	if (severity > 4) { //medium seveirty between 4 and 7
 		color = event.COLORS.warning;
+	}
+    	if (severity > 7) { //high sevirity above 7
+		color = event.COLORS.critical;
 	}
 
 	return event.attachmentWithDefaults({
