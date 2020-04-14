@@ -19,6 +19,67 @@ exports.parse = event => {
 
 	if (detailType === "ECS Task State Change") {
 
+		// {
+		// 	"version": "0",
+		// 	"id": "0efbccea-222d-61fc-c9f3-############",
+		// 	"detail-type": "ECS Task State Change",
+		// 	"source": "aws.ecs",
+		// 	"account": "###########",
+		// 	"time": "2020-04-14T13:16:34Z",
+		// 	"region": "eu-west-1",
+		// 	"resources": [
+		// 		"arn:aws:ecs:eu-west-1:############:task/proxy-ecs-cluster-dev/############"
+		// 	],
+		// 	"detail": {
+		// 		"attachments": [
+		// 			{
+		// 				"id": "c11519c0-1c1d-49b1-b746-############",
+		// 				"type": "eni",
+		// 				"status": "PRECREATED",
+		// 				"details": [
+		// 					{
+		// 						"name": "subnetId",
+		// 						"value": "subnet-:############:"
+		// 					}
+		// 				]
+		// 			}
+		// 		],
+		// 		"availabilityZone": "eu-west-1a",
+		// 		"clusterArn": "arn:aws:ecs:eu-west-1:############:cluster/proxy-ecs-cluster-dev",
+		// 		"containers": [
+		// 			{
+		// 				"containerArn": "arn:aws:ecs:eu-west-1:############:container/8214fb33-1792-47e5-a673-############",
+		// 				"lastStatus": "PENDING",
+		// 				"name": "proxy-blue-master-container-dev",
+		// 				"image": "############.dkr.ecr.eu-west-1.amazonaws.com/proxy-dev:master",
+		// 				"taskArn": "arn:aws:ecs:eu-west-1:############:task/proxy-ecs-cluster-dev/############",
+		// 				"networkInterfaces": [],
+		// 				"cpu": "0"
+		// 			}
+		// 		],
+		// 		"createdAt": "2020-04-14T13:16:34.96Z",
+		// 		"launchType": "FARGATE",
+		// 		"cpu": "256",
+		// 		"memory": "512",
+		// 		"desiredStatus": "RUNNING",
+		// 		"group": "service:ProxyApplicationBlueMaster-EcsServiceDev-############",
+		// 		"lastStatus": "PROVISIONING",
+		// 		"overrides": {
+		// 			"containerOverrides": [
+		// 				{
+		// 					"name": "proxy-blue-master-container-dev"
+		// 				}
+		// 			]
+		// 		},
+		// 		"startedBy": "ecs-svc/############",
+		// 		"updatedAt": "2020-04-14T13:16:34.96Z",
+		// 		"taskArn": "arn:aws:ecs:eu-west-1:############:task/proxy-ecs-cluster-dev/############",
+		// 		"taskDefinitionArn": "arn:aws:ecs:eu-west-1:############:task-definition/proxy-blue-master-container-dev:1",
+		// 		"version": 1,
+		// 		"platformVersion": "1.3.0"
+		// 	}
+		// }
+
 		const service = event.get("detail.group").slice(8);
 		const serviceUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/details`
 
@@ -85,6 +146,25 @@ exports.parse = event => {
 	
 	}
 	else if (detailType === "ECS Service Action") {
+
+		// {
+		// 	"version": "0",
+		// 	"id": "fce16a07-6467-199e-d07e-############",
+		// 	"detail-type": "ECS Service Action",
+		// 	"source": "aws.ecs",
+		// 	"account": "############",
+		// 	"time": "2020-04-14T13:17:15Z",
+		// 	"region": "eu-west-1",
+		// 	"resources": [
+		// 		"arn:aws:ecs:eu-west-1:##############:service/proxy-ecs-cluster-dev/ProxyApplicationBlueMaster-EcsServiceDev-##############"
+		// 	],
+		// 	"detail": {
+		// 		"eventType": "INFO",
+		// 		"eventName": "SERVICE_STEADY_STATE",
+		// 		"clusterArn": "arn:aws:ecs:eu-west-1:##############:cluster/proxy-ecs-cluster-dev",  
+		// 		"createdAt": "2020-04-14T13:17:15.733Z"
+		// 	}
+		// }
 
 		const eventType = event.get("detail.eventType");
 		const eventName = event.get("detail.eventName");
