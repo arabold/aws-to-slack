@@ -81,12 +81,12 @@ exports.parse = event => {
 		// }
 
 		const service = event.get("detail.group").slice(8);
-		const serviceUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/details`
+		const serviceUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/details`;
 
 		const getTask = event.parseArn(event.get("detail.taskArn")).resource;
 		const task = getTask.slice(5).replace(cluster+'/', '');
 		const taskUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/tasks/${task}/details`;
-		const logsUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/logs`
+		const logsUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/logs`;
 
 		var stoppedReason = "Unknown";
 		title = null;
@@ -170,8 +170,8 @@ exports.parse = event => {
 		const eventName = event.get("detail.eventName");
 		const getService = event.parseArn(event.get("resources")).resource;
 		const service = getService.slice(8).replace(cluster+'/', '');
-		const serviceUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/details`
-		const logsUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/logs`
+		const serviceUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/details`;
+		const logsUrl = `https://console.aws.amazon.com/ecs/home?region=${region}#/clusters/${cluster}/services/${service}/logs`;
 
 		title = null;
 
