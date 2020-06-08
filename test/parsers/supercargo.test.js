@@ -24,7 +24,6 @@ const mock = require("./_parser_mock").named("supercargo");
 mock.matchesEvent(supercargoSnsPacket);
 
 mock.matchesEventWithDetail(supercargoSnsPacket, {
-	"author_name": "Victoria Supercargo",
 	"color": "warning",
 	"fallback": "some message to #victoria-monitoring",
 	"title": "TestInvoke",

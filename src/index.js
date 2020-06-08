@@ -21,7 +21,8 @@ const _ = require("lodash")
 		"inspector",
 		"rds",
 		"ses-received",
-    "supercargo",
+		"watchman",
+		"supercargo",
 		// Last attempt to parse, will match any message:
 		"generic",
 	];
