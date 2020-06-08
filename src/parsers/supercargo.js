@@ -2,7 +2,10 @@
 // Supercargo event parser
 //
 exports.matches = event =>
-	_.get(event.message, 'slack_channel') === '#victoria-monitoring';
+	_.has(event.message, 'slack_channel')
+	&& _.has(event.message, 'options')
+	&& _.has(event.message.options, 'color')
+	&& _.get(event.message, 'slack_channel') === '#victoria-monitoring';
 
 exports.parse = event => {
 	
