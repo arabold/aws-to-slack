@@ -11,11 +11,11 @@ const watchmanSnsPacket = {
 			"Signature": "EXAMPLE",
 			"SigningCertUrl": "EXAMPLE",
 			"MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
-			"Message":"{\"options\": {\"color\": \"warning\", \"format\": \"raw\"}, \"slack_channel\": \"#victoria-monitoring\", \"message\": \"some watchman message\"}",
+			"Message":"{\"options\": {\"color\": \"warning\", \"format\": \"raw\"}, \"slack_channel\": \"#victoria-monitoring\", \"message\": \"some watchman message\", \"origin\": \"watchman\"}",
 			"Type": "Notification",
 			"UnsubscribeUrl": "EXAMPLE",
 			"TopicArn": `arn:aws:sns:region:account-id:topicname`,
-			"Subject": "WATCHMAN"
+			"Subject": "wadus"
 		}
 	}]
 };
@@ -26,5 +26,5 @@ mock.matchesEvent(watchmanSnsPacket);
 mock.matchesEventWithDetail(watchmanSnsPacket, {
 	"color": "warning",
 	"fallback": "some watchman message",
-	"title": "WATCHMAN",
+	"title": "wadus"
 });

@@ -3,7 +3,7 @@
 //
 exports.matches = event =>
 	_.has(event.message, 'slack_channel')
-	&& event.getSubject().toLowerCase() == 'watchman';
+	&& (event.getSubject().toLowerCase() == 'watchman' || _.get(event.message, 'origin') === 'watchman');
 
 exports.parse = event => {
 	
