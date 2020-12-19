@@ -1,14 +1,15 @@
 //
 // RDS Message
 //
-exports.matches = event =>
-	_.get(event.message, "Event Source") === "db-instance";
+exports.matches = event => event.getSource() === "rds";
 
 exports.parse = event => {
-	const text = event.get("Event Message");
-	const instanceId = event.get("Source ID");
-	const link = event.get("Identifier Link");
-	const time = event.get("Event Time");
+	const text = event.get("detail.Message");
+	const instanceId = event.get("detail.SourceIdentifier");
+	const region = event.parseArn(event.get("detail.SourceArn")).region;
+	const cluster = event.parseArn(event.get("detail.SourceArn")).resource.slice(8);
+	const time = event.get("time");
+	var link = `https://console.aws.amazon.com/rds/home?region=${region}#database:id=${instanceId};is-cluster=true`;
 
 	return event.attachmentWithDefaults({
 		fallback: `${instanceId}: ${text}`,
