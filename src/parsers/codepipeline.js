@@ -3,7 +3,7 @@
 //
 exports.matches = event =>
 	event.getSource() === "codepipeline"
-	&& !_.has(event.message, "approval.pipelineName");
+	&& _.get(event.message, "detail-type") === "CodePipeline Pipeline Execution State Change";
 
 exports.parse = event => {
 	const pipeline = event.get("detail.pipeline", "<missing-pipeline>");
