@@ -79,6 +79,16 @@ exports.parse = async event => {
 async function getChart(event) {
 	const message = event.message;
 	const trigger = message.Trigger;
+	
+	if (!trigger.MetricName && trigger.Metrics) {
+		// Handle the case of composite metrics like anomaly detection
+		trigger.MetricName = trigger.Metrics[0].MetricStat.Metric.MetricName
+		trigger.Namespace = trigger.Metrics[0].MetricStat.Metric.Namespace
+		trigger.Dimensions = trigger.Metrics[0].MetricStat.Metric.Dimensions
+		trigger.Statistic = trigger.Metrics[0].MetricStat.Stat
+		trigger.Unit = trigger.Metrics[0].MetricStat.Unit
+	}
+	
 	const metric = {
 		title: `${trigger.MetricName} (${trigger.Statistic}/${trigger.Period}s)`,
 		color: "af9cf4",
