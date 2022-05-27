@@ -28,12 +28,36 @@ const _ = require("lodash")
 		"generic",
 	];
 
+const parsers = {};
+
+parsers['cloudwatch'] = require('./parsers/cloudwatch');
+parsers['codecommit/pullrequest'] = require('./parsers/codecommit/pullrequest');
+parsers['codecommit/repository'] = require('./parsers/codecommit/repository');
+parsers['autoscaling'] = require('./parsers/autoscaling');
+parsers['aws-health'] = require('./parsers/aws-health');
+parsers['batch-events'] = require('./parsers/batch-events');
+parsers['beanstalk'] = require('./parsers/beanstalk');
+parsers['cloudformation'] = require('./parsers/cloudformation');
+parsers['codebuild'] = require('./parsers/codebuild');
+parsers['codedeployCloudWatch'] = require('./parsers/codedeployCloudWatch');
+parsers['codedeploySns'] = require('./parsers/codedeploySns');
+parsers['codepipeline'] = require('./parsers/codepipeline');
+parsers['codepipeline-approval'] = require('./parsers/codepipeline-approval');
+parsers['guardduty'] = require('./parsers/guardduty');
+parsers['inspector'] = require('./parsers/inspector');
+parsers['rds'] = require('./parsers/rds');
+parsers['ecs-event'] = require('./parsers/ecs-event');
+parsers['ses-bounce'] = require('./parsers/ses-bounce');
+parsers['ses-complaint'] = require('./parsers/ses-complaint');
+parsers['ses-received'] = require('./parsers/ses-received');
+parsers['generic'] = require('./parsers/generic');
+
 class LambdaHandler {
 
 	constructor(waterfall = defaultParserWaterfall) {
 		this.lastParser = null;
 		this.parsers = _.map(waterfall, name => {
-			const parser = require(`./parsers/${name}`);
+			const parser = parsers[name];
 			if (!parser.name) {
 				// modify package in-memory
 				parser.name = name;
